@@ -1,0 +1,740 @@
+{
+ "type": "FeatureCollection",
+ "name": "mothra_vents",
+ "crs": {
+  "type": "name",
+  "properties": {
+   "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+  }
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.10965529,
+     47.920939066
+    ]
+   },
+   "properties": {
+    "orig_order": 365,
+    "sequence_id": 56,
+    "height_m": 15,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 120.8346,
+    "utm9n_easting": 491807.719,
+    "utm9n_northing": 5307518.809,
+    "seafloor_depth_m": -2281.993,
+    "col_wgs84": 6,
+    "row_wgs84": 387,
+    "col_utm1m": 6,
+    "row_utm1m": 576
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109601307,
+     47.920963689
+    ]
+   },
+   "properties": {
+    "orig_order": 364,
+    "sequence_id": 57,
+    "height_m": 18,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Stonehenge",
+    "dist_from_axis_m": 117.6307,
+    "utm9n_easting": 491811.756,
+    "utm9n_northing": 5307521.54,
+    "seafloor_depth_m": -2282.921,
+    "col_wgs84": 10,
+    "row_wgs84": 385,
+    "col_utm1m": 10,
+    "row_utm1m": 573
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109500348,
+     47.921035486
+    ]
+   },
+   "properties": {
+    "orig_order": 363,
+    "sequence_id": 58,
+    "height_m": 7,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 112.3673,
+    "utm9n_easting": 491819.31,
+    "utm9n_northing": 5307529.509,
+    "seafloor_depth_m": -2283.714,
+    "col_wgs84": 18,
+    "row_wgs84": 379,
+    "col_utm1m": 18,
+    "row_utm1m": 565
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109383665,
+     47.92106804
+    ]
+   },
+   "properties": {
+    "orig_order": 362,
+    "sequence_id": 59,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 104.8577,
+    "utm9n_easting": 491828.032,
+    "utm9n_northing": 5307533.115,
+    "seafloor_depth_m": -2283.746,
+    "col_wgs84": 26,
+    "row_wgs84": 377,
+    "col_utm1m": 27,
+    "row_utm1m": 561
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109483561,
+     47.921125661
+    ]
+   },
+   "properties": {
+    "orig_order": 361,
+    "sequence_id": 60,
+    "height_m": 14,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 113.705,
+    "utm9n_easting": 491820.578,
+    "utm9n_northing": 5307539.53,
+    "seafloor_depth_m": -2284.61,
+    "col_wgs84": 19,
+    "row_wgs84": 373,
+    "col_utm1m": 19,
+    "row_utm1m": 555
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109236972,
+     47.921813607
+    ]
+   },
+   "properties": {
+    "orig_order": 360,
+    "sequence_id": 61,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Cuchalainn",
+    "dist_from_axis_m": 115.3478,
+    "utm9n_easting": 491839.109,
+    "utm9n_northing": 5307615.965,
+    "seafloor_depth_m": -2285.337,
+    "col_wgs84": 37,
+    "row_wgs84": 321,
+    "col_utm1m": 38,
+    "row_utm1m": 479
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109147061,
+     47.921832739
+    ]
+   },
+   "properties": {
+    "orig_order": 359,
+    "sequence_id": 62,
+    "height_m": 4,
+    "morphology": "mound",
+    "vent_field": "Mothra",
+    "chimney_name": "Cuchalainn:Bat Tower",
+    "dist_from_axis_m": 109.393,
+    "utm9n_easting": 491845.829,
+    "utm9n_northing": 5307618.082,
+    "seafloor_depth_m": -2285.698,
+    "col_wgs84": 44,
+    "row_wgs84": 320,
+    "col_utm1m": 44,
+    "row_utm1m": 476
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109098039,
+     47.92194857
+    ]
+   },
+   "properties": {
+    "orig_order": 358,
+    "sequence_id": 63,
+    "height_m": 9,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Cuchalainn:Brigid",
+    "dist_from_axis_m": 109.1276,
+    "utm9n_easting": 491849.509,
+    "utm9n_northing": 5307630.951,
+    "seafloor_depth_m": -2285.458,
+    "col_wgs84": 48,
+    "row_wgs84": 311,
+    "col_utm1m": 48,
+    "row_utm1m": 464
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109211166,
+     47.923167017
+    ]
+   },
+   "properties": {
+    "orig_order": 357,
+    "sequence_id": 64,
+    "height_m": 6,
+    "morphology": "mound",
+    "vent_field": "Mothra",
+    "chimney_name": "Crab Basin",
+    "dist_from_axis_m": 142.2748,
+    "utm9n_easting": 491841.25,
+    "utm9n_northing": 5307766.386,
+    "seafloor_depth_m": -2279.583,
+    "col_wgs84": 39,
+    "row_wgs84": 220,
+    "col_utm1m": 40,
+    "row_utm1m": 328
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109143101,
+     47.923170082
+    ]
+   },
+   "properties": {
+    "orig_order": 356,
+    "sequence_id": 65,
+    "height_m": 18,
+    "morphology": "mound",
+    "vent_field": "Mothra",
+    "chimney_name": "Crab Basin:Gwenen",
+    "dist_from_axis_m": 137.2609,
+    "utm9n_easting": 491846.335,
+    "utm9n_northing": 5307766.72,
+    "seafloor_depth_m": -2280.49,
+    "col_wgs84": 44,
+    "row_wgs84": 220,
+    "col_utm1m": 45,
+    "row_utm1m": 328
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109117512,
+     47.923261786
+    ]
+   },
+   "properties": {
+    "orig_order": 355,
+    "sequence_id": 66,
+    "height_m": 10,
+    "morphology": "mound",
+    "vent_field": "Mothra",
+    "chimney_name": "Crab Basin",
+    "dist_from_axis_m": 136.5125,
+    "utm9n_easting": 491848.261,
+    "utm9n_northing": 5307776.91,
+    "seafloor_depth_m": -2282.169,
+    "col_wgs84": 46,
+    "row_wgs84": 213,
+    "col_utm1m": 47,
+    "row_utm1m": 318
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109051989,
+     47.923284974
+    ]
+   },
+   "properties": {
+    "orig_order": 354,
+    "sequence_id": 67,
+    "height_m": 14,
+    "morphology": "mound",
+    "vent_field": "Mothra",
+    "chimney_name": "Crab Basin",
+    "dist_from_axis_m": 131.9398,
+    "utm9n_easting": 491853.16,
+    "utm9n_northing": 5307779.48,
+    "seafloor_depth_m": -2287.064,
+    "col_wgs84": 51,
+    "row_wgs84": 211,
+    "col_utm1m": 52,
+    "row_utm1m": 315
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.109169512,
+     47.923327786
+    ]
+   },
+   "properties": {
+    "orig_order": 353,
+    "sequence_id": 68,
+    "height_m": 12,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Crab Basin",
+    "dist_from_axis_m": 141.2007,
+    "utm9n_easting": 491844.387,
+    "utm9n_northing": 5307784.251,
+    "seafloor_depth_m": -2283.799,
+    "col_wgs84": 42,
+    "row_wgs84": 208,
+    "col_utm1m": 43,
+    "row_utm1m": 310
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.108715491,
+     47.923738854
+    ]
+   },
+   "properties": {
+    "orig_order": 352,
+    "sequence_id": 69,
+    "height_m": 8,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Faulty Towers",
+    "dist_from_axis_m": 114.057,
+    "utm9n_easting": 491878.369,
+    "utm9n_northing": 5307829.891,
+    "seafloor_depth_m": -2273.951,
+    "col_wgs84": 76,
+    "row_wgs84": 177,
+    "col_utm1m": 77,
+    "row_utm1m": 265
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.108635324,
+     47.923744484
+    ]
+   },
+   "properties": {
+    "orig_order": 351,
+    "sequence_id": 70,
+    "height_m": 16,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Faulty Towers:Tower",
+    "dist_from_axis_m": 108.474,
+    "utm9n_easting": 491884.359,
+    "utm9n_northing": 5307830.508,
+    "seafloor_depth_m": -2270.668,
+    "col_wgs84": 82,
+    "row_wgs84": 177,
+    "col_utm1m": 83,
+    "row_utm1m": 264
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.108681627,
+     47.923746824
+    ]
+   },
+   "properties": {
+    "orig_order": 350,
+    "sequence_id": 71,
+    "height_m": 15,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Faulty Towers",
+    "dist_from_axis_m": 111.8654,
+    "utm9n_easting": 491880.9,
+    "utm9n_northing": 5307830.773,
+    "seafloor_depth_m": -2271.815,
+    "col_wgs84": 79,
+    "row_wgs84": 177,
+    "col_utm1m": 79,
+    "row_utm1m": 264
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.108600018,
+     47.923793674
+    ]
+   },
+   "properties": {
+    "orig_order": 349,
+    "sequence_id": 72,
+    "height_m": 11,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Faulty Towers",
+    "dist_from_axis_m": 107.6109,
+    "utm9n_easting": 491887.004,
+    "utm9n_northing": 5307835.971,
+    "seafloor_depth_m": -2269.556,
+    "col_wgs84": 85,
+    "row_wgs84": 173,
+    "col_utm1m": 86,
+    "row_utm1m": 259
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.108612103,
+     47.923838191
+    ]
+   },
+   "properties": {
+    "orig_order": 348,
+    "sequence_id": 73,
+    "height_m": 9,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Faulty Towers",
+    "dist_from_axis_m": 109.9826,
+    "utm9n_easting": 491886.108,
+    "utm9n_northing": 5307840.92,
+    "seafloor_depth_m": -2270.666,
+    "col_wgs84": 84,
+    "row_wgs84": 170,
+    "col_utm1m": 85,
+    "row_utm1m": 254
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.108482813,
+     47.923959984
+    ]
+   },
+   "properties": {
+    "orig_order": 347,
+    "sequence_id": 74,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Faulty Towers",
+    "dist_from_axis_m": 104.9228,
+    "utm9n_easting": 491895.786,
+    "utm9n_northing": 5307854.443,
+    "seafloor_depth_m": -2269.636,
+    "col_wgs84": 94,
+    "row_wgs84": 161,
+    "col_utm1m": 94,
+    "row_utm1m": 240
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.108720384,
+     47.924137381
+    ]
+   },
+   "properties": {
+    "orig_order": 346,
+    "sequence_id": 75,
+    "height_m": 5,
+    "morphology": "mound",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 127.847,
+    "utm9n_easting": 491878.066,
+    "utm9n_northing": 5307874.185,
+    "seafloor_depth_m": -2267.81,
+    "col_wgs84": 76,
+    "row_wgs84": 148,
+    "col_utm1m": 77,
+    "row_utm1m": 220
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.108656384,
+     47.924172381
+    ]
+   },
+   "properties": {
+    "orig_order": 345,
+    "sequence_id": 76,
+    "height_m": 5,
+    "morphology": "mound",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 124.4834,
+    "utm9n_easting": 491882.852,
+    "utm9n_northing": 5307878.068,
+    "seafloor_depth_m": -2267.983,
+    "col_wgs84": 81,
+    "row_wgs84": 145,
+    "col_utm1m": 81,
+    "row_utm1m": 216
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.108659622,
+     47.924226983
+    ]
+   },
+   "properties": {
+    "orig_order": 344,
+    "sequence_id": 77,
+    "height_m": 8,
+    "morphology": "mound",
+    "vent_field": "Mothra",
+    "chimney_name": "Twin Peaks",
+    "dist_from_axis_m": 126.5683,
+    "utm9n_easting": 491882.619,
+    "utm9n_northing": 5307884.137,
+    "seafloor_depth_m": -2270.184,
+    "col_wgs84": 80,
+    "row_wgs84": 141,
+    "col_utm1m": 81,
+    "row_utm1m": 210
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.107829944,
+     47.925016276
+    ]
+   },
+   "properties": {
+    "orig_order": 343,
+    "sequence_id": 78,
+    "height_m": 12,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 94.3627,
+    "utm9n_easting": 491944.722,
+    "utm9n_northing": 5307971.776,
+    "seafloor_depth_m": -2261.77,
+    "col_wgs84": 142,
+    "row_wgs84": 82,
+    "col_utm1m": 143,
+    "row_utm1m": 123
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.107158125,
+     47.925740768
+    ]
+   },
+   "properties": {
+    "orig_order": 342,
+    "sequence_id": 79,
+    "height_m": 11,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 60.1549,
+    "utm9n_easting": 491995.021,
+    "utm9n_northing": 5308052.229,
+    "seafloor_depth_m": -2255.03,
+    "col_wgs84": 193,
+    "row_wgs84": 28,
+    "col_utm1m": 194,
+    "row_utm1m": 42
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.107495947,
+     47.925755585
+    ]
+   },
+   "properties": {
+    "orig_order": 341,
+    "sequence_id": 80,
+    "height_m": 4,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 85.2686,
+    "utm9n_easting": 491969.788,
+    "utm9n_northing": 5308053.911,
+    "seafloor_depth_m": -2253.75,
+    "col_wgs84": 167,
+    "row_wgs84": 27,
+    "col_utm1m": 168,
+    "row_utm1m": 41
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.107262645,
+     47.925764881
+    ]
+   },
+   "properties": {
+    "orig_order": 340,
+    "sequence_id": 81,
+    "height_m": 11,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "Cauldron",
+    "dist_from_axis_m": 68.3204,
+    "utm9n_easting": 491987.217,
+    "utm9n_northing": 5308054.92,
+    "seafloor_depth_m": -2254.896,
+    "col_wgs84": 185,
+    "row_wgs84": 26,
+    "col_utm1m": 186,
+    "row_utm1m": 40
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.107290274,
+     47.925843734
+    ]
+   },
+   "properties": {
+    "orig_order": 339,
+    "sequence_id": 82,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 71.9469,
+    "utm9n_easting": 491985.166,
+    "utm9n_northing": 5308063.687,
+    "seafloor_depth_m": -2258.599,
+    "col_wgs84": 183,
+    "row_wgs84": 20,
+    "col_utm1m": 184,
+    "row_utm1m": 31
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.107142274,
+     47.925940734
+    ]
+   },
+   "properties": {
+    "orig_order": 338,
+    "sequence_id": 83,
+    "height_m": 4,
+    "morphology": "chimney",
+    "vent_field": "Mothra",
+    "chimney_name": "",
+    "dist_from_axis_m": 63.0407,
+    "utm9n_easting": 491996.236,
+    "utm9n_northing": 5308074.453,
+    "seafloor_depth_m": -2256.521,
+    "col_wgs84": 194,
+    "row_wgs84": 13,
+    "col_utm1m": 195,
+    "row_utm1m": 20
+   }
+  }
+ ]
+}

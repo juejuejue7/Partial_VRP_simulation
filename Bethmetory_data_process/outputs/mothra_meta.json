@@ -1,0 +1,138 @@
+{
+  "source": {
+    "path": "Bethy_data/EndeavourAUVSouthCentral1.asc",
+    "driver": "AAIGrid",
+    "dtype": "float32",
+    "shape": [
+      1368,
+      6353
+    ],
+    "crs_embedded": null,
+    "crs_assigned": "EPSG:4326",
+    "nodata": -99999.0,
+    "cellsize_deg": 1.338111292e-05,
+    "bounds": [
+      -129.141,
+      47.9167,
+      -129.05598978961922,
+      47.935005362474556
+    ]
+  },
+  "crop_wgs84": {
+    "shape": [
+      438,
+      293
+    ],
+    "n_cells": 128334,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2294.72216796875,
+    "z_max": -2197.44921875,
+    "z_mean": -2263.6300174956223,
+    "z_std": 18.195000439469663,
+    "relief_m": 97.27294921875,
+    "crs": "EPSG:4326",
+    "bounds_lon_lat": [
+      -129.10974172021886,
+      47.92025937603671,
+      -129.10582105413332,
+      47.92612030349567
+    ],
+    "cellsize_deg": 1.338111292e-05,
+    "requested_bbox": {
+      "lon_min": -129.10974,
+      "lon_max": -129.10583,
+      "lat_min": 47.92026,
+      "lat_max": 47.92612
+    }
+  },
+  "utm9n_1m": {
+    "shape": [
+      653,
+      294
+    ],
+    "n_cells": 191982,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2294.66382354083,
+    "z_max": -2197.489276576429,
+    "z_mean": -2263.5394144052584,
+    "z_std": 18.278879151578387,
+    "relief_m": 97.17454696440109,
+    "crs": "EPSG:32609",
+    "resolution_m": [
+      1.0,
+      1.0
+    ],
+    "bounds_utm": [
+      491801.0,
+      5307442.0,
+      492095.0,
+      5308095.0
+    ],
+    "resampling": "bilinear",
+    "transform": [
+      491801.0,
+      1.0,
+      0.0,
+      5308095.0,
+      0.0,
+      -1.0
+    ]
+  },
+  "context_grid": {
+    "shape": [
+      456,
+      2117
+    ],
+    "decimate": 3,
+    "bounds_lon_lat": [
+      -129.141,
+      47.9167,
+      -129.05598978961922,
+      47.935005362474556
+    ],
+    "note": "全测区降采样底图, 仅供上下文示意, 不用于定量分析"
+  },
+  "outputs": [
+    "endeavour_context.npz",
+    "mothra_meta.json",
+    "mothra_utm9n_1m.asc",
+    "mothra_utm9n_1m.asc.aux.xml",
+    "mothra_utm9n_1m.npz",
+    "mothra_utm9n_1m.prj",
+    "mothra_utm9n_1m.tif",
+    "mothra_wgs84.asc",
+    "mothra_wgs84.asc.aux.xml",
+    "mothra_wgs84.prj",
+    "mothra_wgs84.tif"
+  ],
+  "vents": {
+    "source": "Bethy_data/TABLE_SI.xlsx (Supplemental Table S1)",
+    "selection": "经纬度落在 crop_wgs84.bounds_lon_lat 内",
+    "cross_check": "与表中 Vent Field Name == 'Mothra' 完全一致",
+    "n_total_in_table": 572,
+    "n_selected": 28,
+    "by_morphology": {
+      "chimney": 20,
+      "mound": 8
+    },
+    "height_m_range": [
+      4,
+      18
+    ],
+    "named": [
+      "Cauldron",
+      "Crab Basin",
+      "Crab Basin:Gwenen",
+      "Cuchalainn",
+      "Cuchalainn:Bat Tower",
+      "Cuchalainn:Brigid",
+      "Faulty Towers",
+      "Faulty Towers:Tower",
+      "Stonehenge",
+      "Twin Peaks"
+    ],
+    "note": "height_m = 烟囱高出海底的高度(表中给定); seafloor_depth_m = 本项目栅格在该点的海底水深(负向下), 两者含义不同"
+  }
+}

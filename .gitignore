@@ -1,0 +1,138 @@
+# ==============================================================================
+# 多AUV協調探査システム — .gitignore
+#
+# 原则:
+#   保留 —— 源码、契约、配置、文档、脚本、KB 级的结果表格、
+#           以及数据处理链路的小体积交接产物(Bethmetory_data_process/outputs/)
+#   忽略 —— 缓存、日志、图片、大体积原始栅格、可由脚本重跑再生的中间产物
+#
+# 原始水深栅格(约 560MB)一律不入库,来源与获取方式见 Bethmetory_data/README.md。
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# Python
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+
+# 测试 / 静态检查缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+
+# ------------------------------------------------------------------------------
+# 编辑器 / 操作系统
+# ------------------------------------------------------------------------------
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# VS Code:只共享 settings.json / extensions.json,其余(launch/个人配置)不入库
+**/.vscode/*
+!**/.vscode/settings.json
+!**/.vscode/extensions.json
+
+# Claude Code:agents/ 与 settings.json 入库(团队契约的一部分),本地覆盖不入库
+**/.claude/settings.local.json
+CLAUDE.md
+.claude/
+.vscode/
+agent_team_harness.md
+
+# ------------------------------------------------------------------------------
+# 实验产物 —— 训练日志 / 图片 / 时间线
+# 注:runs/*.pt 权重**保留**(仅 1.9MB,examples/mission_learned_survey.py 默认读取)
+# ------------------------------------------------------------------------------
+wandb/
+runs/**/events.out.tfevents.*
+tensorboard/
+lightning_logs/
+
+# 演示脚本输出的图
+examples/out/
+
+
+# ------------------------------------------------------------------------------
+# Bethmetory_data/ —— 原始水深数据(MGDS 公开数据集 + M127 航次)
+#
+# 大体积栅格不入库:CC BY-NC-SA 3.0 授权下不宜在公开仓库二次分发,
+# 且可按 README.md 的说明从 marine-geo.org 重新下载。
+# MGDS 的 README.txt(含引用信息与 DOI)保留在库内。
+# ------------------------------------------------------------------------------
+Bethmetory_data/MGDS_Download*/**/*.asc
+Bethmetory_data/MGDS_Download*/**/*.grd
+Bethmetory_data/MGDS_Download*/**/*.tif
+Bethmetory_data/MGDS_Download*/**/*.gz
+
+Bethmetory_data/EndeavourAUV_ABE_Topo4mArc.grd
+Bethmetory_data/EndeavourAUV_ABE4_slope.tif
+Bethmetory_data/EndeavourAUV2_slope.tif
+
+# M127 航次原始栅格(约 101MB)
+Bethmetory_data/data/
+
+# 探查脚本跑出来的总览图(可由 detect_chimnys.py / plot_casestudy.py 重跑)
+# —— 同目录下 KB 级的 *_candidates.csv 保留,那是要引用的结果表
+Bethmetory_data/*_overview.png
+Bethmetory_data/Mothra_CaseStudy_Map_Viridis_EQ.png
+
+
+# ------------------------------------------------------------------------------
+# Bethmetory_data_process/ —— 水深数据处理链路
+#
+# 保留:scripts/、README.md、Bethy_data/TABLE_SI.xlsx(572 点热液喷口原表)
+#       outputs/(6.8MB,VRPSimulation 的输入,不入库则下游全线跑不起来)
+# 忽略:77MB 原始 .asc、19MB 出图
+# ------------------------------------------------------------------------------
+Bethmetory_data_process/Bethy_data/*.asc
+Bethmetory_data_process/Bethy_data/*.grd
+Bethmetory_data_process/Bethy_data/*.tif
+Bethmetory_data_process/figures/
+
+
+# ------------------------------------------------------------------------------
+# VRPSimulation/ —— 前段 VRP 仿真
+#
+# 保留:vrpsim/、scripts/、tests/、styles/、waypoints/、conftest.py、README.md
+# 忽略:logs/(259MB 扫参日志)、figures/、data/(由 scripts/01、04 重跑生成)
+# ------------------------------------------------------------------------------
+VRPSimulation/logs/
+VRPSimulation/figures/
+VRPSimulation/data/
+
+
+# ------------------------------------------------------------------------------
+# 杂项
+# ------------------------------------------------------------------------------
+*.log
+*.tmp
+*.bak
+.env
+.env.local
