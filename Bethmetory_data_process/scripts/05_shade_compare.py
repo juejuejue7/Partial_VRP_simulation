@@ -104,7 +104,7 @@ def main() -> None:
 
     FIGDIR.mkdir(parents=True, exist_ok=True)
     setup_font()
-    z_full = np.load(OUTDIR / "mothra_utm9n_1m.npz")["z"].astype("float64")
+    z_full = np.load(OUTDIR / "scenarios" / "mothra" / "mothra_utm9n_1m.npz")["z"].astype("float64")
 
     if args.what == "shade":
         z = z_full[R0:R0 + NR, C0:C0 + NC]

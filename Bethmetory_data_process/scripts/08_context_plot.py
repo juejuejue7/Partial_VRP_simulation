@@ -3,7 +3,7 @@
 """
 08 — 测区总览图 (Mothra 位置示意)
 ================================================================================
-输入 : outputs/endeavour_context.npz  (全测区 1/3 降采样底图 + Mothra bbox)
+输入 : outputs/scenarios/mothra/endeavour_context.npz  (全测区 1/3 降采样底图 + Mothra bbox)
 输出 : figures/fig02_context_endeavour.png
 
 只画: 地形 + Mothra 范围框 + 经纬度坐标轴。
@@ -70,7 +70,7 @@ def main() -> None:
     args = ap.parse_args()
 
     FIGDIR.mkdir(parents=True, exist_ok=True)
-    c = np.load(OUTDIR / "endeavour_context.npz", allow_pickle=False)
+    c = np.load(OUTDIR / "scenarios" / "mothra" / "endeavour_context.npz", allow_pickle=False)
     z = c["z"].astype("float64")
     lon0, lat0, lon1, lat1 = [float(v) for v in c["bounds_wgs84"]]
     mlon0, mlat0, mlon1, mlat1 = [float(v) for v in c["mothra_bbox"]]

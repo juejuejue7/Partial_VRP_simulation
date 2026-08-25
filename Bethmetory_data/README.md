@@ -39,14 +39,19 @@ python tag_bathy_explore.py --download      # 自动下载到 ./data/
 
 ---
 
-## 2. Juan de Fuca / Endeavour Segment(MGDS,约 460 MB)
+## 2. Juan de Fuca / Endeavour Segment(MGDS,约 460 MB + 多场景瓦片约 100 MB)
 
-Mothra 场景的水深底图来源。**整条处理链路只依赖其中一个文件:**
+Mothra 场景的水深底图来源。**Mothra 单场景处理链路只依赖其中一个文件:**
 `EndeavourAUVSouthCentral1.asc` → `Bethmetory_data_process/scripts/01_crop_reproject.py`。
-其余是探查阶段留下的坡度图与备用格式,重跑主链路时不需要。
+其余是探查阶段留下的坡度图与备用格式,重跑 Mothra 主链路时不需要。
 
-两个 MGDS 数据集的 `README.txt`(含完整条款、研究者名单与引用格式)**已随库保留**在
-`MGDS_Download (1)/MGDS_Download/README.txt` 与 `MGDS_Download (2)/.../README.txt`。
+**多场景处理链路**(`Bethmetory_data_process/scripts/00_find_scenarios.py` 起,
+产出 `scenarios.json` 里 mef/high_rise/sparse_*/dense_* 等场景)另外依赖三块
+覆盖全段的 1 m 瓦片,见下方"多场景瓦片"小节。
+
+三个 MGDS 数据集的 `README.txt`(含完整条款、研究者名单与引用格式)**已随库保留**在
+`MGDS_Download (1)/MGDS_Download/README.txt`、`MGDS_Download (2)/.../README.txt`
+与 `MGDS_Download/JdF_Endeavour_Bathymetry/README.txt`。
 
 ### 数据集 21402 —— GeoTIFF 格式
 - 页面: https://www.marine-geo.org/tools/datasets/21402
@@ -73,6 +78,28 @@ Bethmetory_data_process/Bethy_data/EndeavourAUVSouthCentral1.asc
 同目录下的 `TABLE_SI.xlsx`(572 个热液喷口点位,48 KB)已入库,无需另取。
 
 **授权:** CC BY-NC-SA 3.0 US — http://creativecommons.org/licenses/by-nc-sa/3.0/us/
+
+#### 多场景瓦片(同一数据集 21403,南北三块,覆盖 MEF / High Rise / Salty Dawg / Sasquatch 等命名热液场)
+
+`EndeavourAUVSouthCentral1.asc` 只覆盖纬向 47.9167°–47.9350°(Mothra 所在的窄条)。
+其余命名热液场与滑窗搜索候选(见 `Bethmetory_data_process/scenarios.json`)落在这条
+以外, 需要数据集 21403 页面(同上)下载包里的另外三块 1 m 瓦片:
+
+| 文件 | 纬度范围 | 大小(.gz) | 覆盖的场景 |
+|---|---|---|---|
+| `EndeavourAUVTopoSouth1mArc.grd.gz` | 47.8820–47.9167 | 13 MB | (与 Mothra 相邻, 无命名场落入) |
+| `EndeavourAUVTopoCentral1mArc.grd.gz` | 47.9350–47.9740 | 28 MB | **mef / high_rise / dense_1 / dense_2** |
+| `EndeavourAUVTopoNorth1mArc.grd.gz` | 47.9740–48.0050 | 13 MB | **salty_dawg / sasquatch / sparse_2 / sparse_3** |
+
+放到:
+
+```
+Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopo{South,Central,North}1mArc.grd.gz
+```
+
+解压(`gzip -dk`)后即可被 `00_find_scenarios.py` 与 `01_crop_reproject.py --scenario <id>`
+直接读取(rasterio 的 netCDF 驱动原生支持 `.grd`,nodata 为 NaN,与 `.asc` 的
+`-99999` 哨兵值不同, 两种约定脚本内部统一处理,不需要手工转换)。
 
 **数据引用:**
 > Kelley, D.; Delaney, J.; Yoerger, D.; Caress, D.; Clague, D. and A. Denny (2015).

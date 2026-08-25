@@ -78,13 +78,25 @@ def test_window_size_is_configurable(mw):
     """§3:长宽是可调参数,改了要真的生效。"""
     r = run_mission(MissionConfig(window_look_back_m=60.0, window_width_m=40.0, **FAST), mw)
     assert r.meta["window"] == {"look_back_m": 60.0, "width_m": 40.0}
-    assert np.allclose(r.window_north[:, 0],
-                       np.maximum(0.0, r.window_north[:, 1] - 60.0))
-    # 窗口变窄 ⇒ 池里只可能出现横向落在窗口内的点
+    # "North 跨度 == look_back" 只在 Leader 沿测线(南北向)走时成立。换道横移段
+    # (psi≈±pi/2)窗口整体偏在 Leader 东/西侧, 其 North 跨度由**宽度**决定 ——
+    # 那几拍不属于本条断言的语义范围, 排除掉(见 windows.window_north_span)。
+    aligned = np.abs(np.cos(r.leader_psi)) > 0.5
+    assert aligned.any()
+    assert np.allclose(r.window_north[aligned, 0],
+                       np.maximum(0.0, r.window_north[aligned, 1] - 60.0))
+    # 窗口变窄(40m)< 场地 East 跨度(100m)⇒ Leader 走多车道(leader_track 车道
+    # 间距 = window_width_m), 车道中心在 East = width/2, 3*width/2, ... —— 池里
+    # 只可能出现横向落在**某条车道**窗口内的点, 不再是单车道时代"必在东=50 ±20"
+    # 那个特例(该特例只在 width>=east 跨度时成立)。
+    width = 40.0
     for a in r.assignments:
         for wid in a.wp_ids:
             j = int(np.where(mw.dataset.waypoint_id == wid)[0][0])
-            assert abs(mw.dataset.targets_ned[j, 1] - 50.0) <= 20.0 + 1e-6
+            east = mw.dataset.targets_ned[j, 1]
+            lane_idx = round((east - width / 2.0) / width)
+            lane_center = width / 2.0 + lane_idx * width
+            assert abs(east - lane_center) <= width / 2.0 + 1e-6
 
 
 # ======================================================================
@@ -798,7 +810,8 @@ def test_feasibility_says_when_the_leader_must_wait(mw):
     # 关掉等待策略 ⇒ 速度比重新变成硬约束,同一套参数就判不可行
     off = feasibility_estimate(mw, MissionConfig(
         leader_wait_on_lagging_follower=False,
-        leader_wait_on_endangered_target=False, **FAST))
+        leader_wait_on_endangered_target=False,
+        leader_wait_on_turnaround=False, **FAST))
     assert not off["leader_waits"] and not off["feasible"]
     # 匀速 Leader 想全覆盖就得慢到这个速度以下
     assert off["max_leader_speed_mps"] < MissionConfig().leader_speed_mps
@@ -815,6 +828,7 @@ def test_leader_waiting_is_what_makes_full_coverage_possible(mw):
     """
     off = run_mission(MissionConfig(leader_wait_on_lagging_follower=False,
                                     leader_wait_on_endangered_target=False,
+                                    leader_wait_on_turnaround=False,
                                     **FAST), mw)
     assert off.coverage < 1.0, "关掉等待却仍然全覆盖 ⇒ 这个机制没在起作用"
     assert np.isnan(off.t_complete_s)
@@ -857,11 +871,15 @@ def test_hold_decision_cannot_see_the_truth(mw):
 
     # 行为上也验一遍:开了漂移(Leader 的认知带误差)后停船时长会变 ——
     # 若判据偷看真值,漂移对它就毫无影响。
+    # ⚠ 用**多个种子**取"至少一个不同",不吊死在单个种子上:停船时长是离散量
+    #   (拍数 x dt),个别 (drift, seed) 组合会碰巧与无漂移完全相等 —— 实测
+    #   drift=0.05/seed=3 就正好撞上 37.5 == 37.5。那是巧合,不是"判据在读真值"。
     base = run_mission(MissionConfig(nav_drift_frac_of_distance=0.0, **FAST), mw)
-    drift = run_mission(MissionConfig(nav_drift_frac_of_distance=0.05, seed=3,
-                                      **FAST), mw)
-    assert base.leader_hold_total_s != drift.leader_hold_total_s, \
-        "认知误差完全不影响停船决策 —— 疑似判据在读真值"
+    holds = [run_mission(MissionConfig(nav_drift_frac_of_distance=0.05, seed=s,
+                                       **FAST), mw).leader_hold_total_s
+             for s in (3, 7)]
+    assert any(h != base.leader_hold_total_s for h in holds), \
+        f"认知误差完全不影响停船决策 —— 疑似判据在读真值(base={base.leader_hold_total_s}, {holds})"
 
 
 def test_leader_hold_bookkeeping_is_consistent(res):
@@ -883,3 +901,178 @@ def test_leader_hold_bookkeeping_is_consistent(res):
 def test_default_config_achieves_full_coverage(res):
     """默认参数必须能把 22 个目标全观测到 —— 否则默认值就不该是这个。"""
     assert res.coverage == 1.0, f"漏了 {res.missed_wp_ids}"
+
+
+# ======================================================================
+# D16 等待判据的**朝向相关性**(2026-08-24 修复:多车道南行时判据曾整体失效)
+# ======================================================================
+def _hold_probe(psi: float, *, target_offset_back_m: float):
+    """构造一个"目标马上要掉出窗口后沿"的局面, 返回 `_hold_reason` 的判定。
+
+    `psi=0` 北行 / `psi=pi` 南行。目标放在窗口内、距后沿 `target_offset_back_m` 米
+    (小于 v*lookahead 时即"濒危", 判据 C 应触发)。两个朝向下目标相对 Leader 的
+    **局部**位置完全一样, 只是世界坐标里镜像 —— 所以两者的判定必须一致, 判据若还
+    在用固定的"南方"当后沿, 南行这一支就会静默失效。
+    """
+    import numpy as np
+    from msim.geometry.window import get_window
+
+    import vrpsim.mission as M
+    from vrpsim.contracts.config import mothra_window_config
+    from vrpsim.contracts.mission import MissionConfig
+    from vrpsim.tracking import LeaderTracker
+
+    cfg = MissionConfig(**FAST)
+    win = mothra_window_config(look_back_m=cfg.window_look_back_m,
+                               width_m=cfg.window_width_m)
+    lead_n, lead_e = 300.0, 50.0
+    region = get_window(np.array([lead_n, lead_e, psi], dtype=float), win)
+
+    # 目标: 沿"后方"方向走 (look_back - offset) 米 —— 即离后沿还差 offset 米
+    back = np.array([-np.cos(psi), -np.sin(psi)])
+    s = cfg.window_look_back_m - target_offset_back_m
+    tgt = np.array([lead_n, lead_e]) + s * back
+
+    class _DS:
+        targets_ned = np.array([tgt], dtype=float)
+
+    tracker = LeaderTracker(cfg)           # 影子停在起点, 不占用任何目标
+    return M._hold_reason(cfg, tracker, _DS(), {1: 0}, 1, region,
+                          held_lagging=False)
+
+
+def test_wait_criteria_are_heading_relative_not_south_anchored():
+    """判据 C(濒危目标)必须按 Leader **朝向**判后沿, 不能锚死在地图南方。
+
+    回归 2026-08-24 的 bug: `_hold_reason` 曾用 `back_north = leader.north - look_back`
+    当后沿, 只有北行时才对。多车道 boustrophedon 的偶数条测线是**南行**, 后沿在
+    Leader **北侧**, 该写法下判据 C/A 在南行全程一次都不触发 —— sparse_2 实测南行
+    占 46% 的时长, 两条判据触发次数均为 0, 4 个目标因此在无人接单的情况下滑出窗口。
+    """
+    from vrpsim.contracts.mission import HOLD_ENDANGERED
+
+    # 濒危(离后沿 5 m, 远小于 v*lookahead): 两个朝向都必须触发
+    assert _hold_probe(0.0, target_offset_back_m=5.0) & HOLD_ENDANGERED, "北行未触发"
+    assert _hold_probe(np.pi, target_offset_back_m=5.0) & HOLD_ENDANGERED, \
+        "南行未触发 —— 判据锚死在南方了"
+    # 安全(刚进窗口, 离后沿 95 m): 两个朝向都不该触发
+    assert not (_hold_probe(0.0, target_offset_back_m=95.0) & HOLD_ENDANGERED)
+    assert not (_hold_probe(np.pi, target_offset_back_m=95.0) & HOLD_ENDANGERED)
+
+
+# ======================================================================
+# 投影点去冲突(2026-08-24 修复:窗口无目标时两台被送到同一个点)
+# ======================================================================
+def test_projection_points_are_separated_between_followers(mw):
+    """窗口里没有可派目标时,两台的投影点必须横向隔开 >= projection_min_separation_m。
+
+    回归 2026-08-24 的 bug:`plan_round` 曾逐台调 `project_to_window_front`,
+    该函数只看自己的 East 并夹进同一个窗口区间 ⇒ 两台落到同一点。投影点又不占用
+    (WP_PROJECTION),min-max VRP 的互斥只覆盖真实目标、管不到它们。
+    sparse_2 实测:314 个双投影轮里 110 轮两点完全重合,两台最近逼到 0.70 m。
+    """
+    from msim.geometry.window import get_window
+
+    from vrpsim.planner import project_to_window_front_multi
+
+    cfg = MissionConfig(**FAST)
+    reg = get_window(np.array([200.0, 50.0, 0.0]),
+                     mothra_window_config(width_m=cfg.window_width_m))
+    sep = cfg.projection_min_separation_m
+
+    # 两台挤在同一个 East 上 —— 修复前会拿到两个完全相同的投影点
+    pts = project_to_window_front_multi(
+        [np.array([100.0, 50.0]), np.array([120.0, 50.2])],
+        reg, mw.world.y_max_m, min_sep_m=sep)
+    assert all(p is not None for p in pts)
+    assert abs(pts[0][1] - pts[1][1]) >= sep - 1e-9, "两台投影点没有拉开"
+    assert all(p[0] == pytest.approx(200.0) for p in pts), "投影点应落在窗口前边界"
+
+    # 本来就分得开 ⇒ 不该被无谓挪动(保持各自 East)
+    far = project_to_window_front_multi(
+        [np.array([100.0, 10.0]), np.array([120.0, 90.0])],
+        reg, mw.world.y_max_m, min_sep_m=sep)
+    assert far[0][1] == pytest.approx(10.0) and far[1][1] == pytest.approx(90.0)
+
+    # 不需要投影点的那台返回 None, 且不参与去冲突
+    part = project_to_window_front_multi(
+        [np.array([100.0, 50.0]), np.array([120.0, 50.0])],
+        reg, mw.world.y_max_m, min_sep_m=sep, active=[True, False])
+    assert part[1] is None and part[0] is not None
+    assert part[0][1] == pytest.approx(50.0)
+
+
+def test_followers_keep_min_separation_when_both_idle(mw):
+    """端到端:每一轮下发里,两台的**投影点**必须隔开 >= projection_min_separation_m。
+
+    ⚠ 查的是**下发的落点**,不是车辆的瞬时位置。这个参数只约束投影点本身
+      (见 `contracts/mission.py::projection_min_separation_m` 的作用域说明):
+      两台从不同方位飞向同一条前边界的**途中**照样可以更近 —— 本仿真开环、
+      无航迹协商,不做航路级避碰。拿瞬时位置来断言会把"没实现的保证"写成契约。
+    """
+    res = run_mission(MissionConfig(**FAST), mw)
+    sep_cfg = res.cfg.projection_min_separation_m
+
+    by_t = {}
+    for a in res.assignments:
+        by_t.setdefault(a.t_s, []).append(a)
+
+    bad, checked = [], 0
+    for t_s, group in by_t.items():
+        projs = [a.points_ned[-1] for a in group if a.has_projection]
+        if len(projs) < 2:
+            continue
+        checked += 1
+        for i in range(len(projs)):
+            for j in range(i + 1, len(projs)):
+                d = float(np.linalg.norm(projs[i] - projs[j]))
+                if d < sep_cfg - 1e-6:
+                    bad.append((float(t_s), d))
+    assert checked, "整条时间线上没有一轮是两台同时拿投影点 —— 这个用例没测到东西"
+    assert not bad, f"两台的投影点靠得比 {sep_cfg} m 还近: {bad[:5]}"
+
+
+def test_turnaround_criterion_prevents_losing_the_window_at_lane_reversal(mw):
+    """判据 D:车道折返在即且窗内还有没派出去的目标 ⇒ Leader 必须停船。
+
+    回归 2026-08-25 的失效:多车道 boustrophedon 折返时窗口整体转向 180°,窗内目标
+    的 `s`(沿后方距离)一拍之内由正跳负、直接出局 —— 它**不是**从后沿滑出去的,
+    判据 C 的"再走 lookahead 会不会越过后沿"感知不到。实测 dense_1 的 wp57:
+    t=1784.0 时 s=+67.4 m 稳在窗内,下一拍 s=-32.3 m 出局,此前被下发过 9 次、
+    进池 18 轮却始终没轮到队首。
+
+    ⚠ 用 `dense_1`(bug 的现场)而不是把 Mothra 用窄窗口逼成多车道:Mothra 目标少、
+      在折返前就被消化完了,判据 D 一次都不触发 —— 那样的用例是绿的但什么也没测到。
+      要钉一个失效形态,就得用它真正发生的那个场景。
+    """
+    from vrpsim.contracts.mission import HOLD_TURNAROUND
+    from vrpsim.world import build_world_for_scenario
+
+    d1 = build_world_for_scenario("dense_1")
+    kw = dict(max_mission_time_s=300000.0, **FAST)
+    on = run_mission(MissionConfig(**kw), d1)
+    off = run_mission(MissionConfig(leader_wait_on_turnaround=False, **kw), d1)
+
+    # 该场景确实有折返(多车道), 否则这条用例什么也没测到
+    assert on.meta["n_leader_lanes"] >= 2, "不是多车道场景, 用例失效"
+    # 判据 D 确实触发过, 且只在开关打开时触发
+    assert float(on.summary()["leader_hold_turnaround_s"]) > 0.0, "判据 D 从未触发"
+    assert float(off.summary()["leader_hold_turnaround_s"]) == 0.0, "关掉了还在触发"
+    assert not np.any(off.leader_hold_reason & HOLD_TURNAROUND)
+    # 这才是它存在的理由:关掉就会在折返处丢点, 打开就不丢
+    assert off.coverage < 1.0, "关掉判据 D 却没漏点 —— 这个用例失去了意义"
+    assert on.coverage == 1.0, "打开判据 D 仍然漏点 —— 折返丢窗没被治住"
+
+
+def test_turnaround_hold_only_fires_with_a_next_segment(mw):
+    """判据 D 只在**后面还有段可走**时生效 —— 最后一条车道走完是任务结束,
+    那由强插末轮(D15)与终止条件负责,不该把 Leader 永远钉死在终点。"""
+    from vrpsim.contracts.mission import HOLD_TURNAROUND
+
+    r = run_mission(MissionConfig(window_look_back_m=60.0, window_width_m=40.0,
+                                  **FAST), mw)
+    # 走完全部测线之后(leader 到达折线终点)不许再有 D 触发
+    done = r.leader_holding & (r.leader_hold_reason & HOLD_TURNAROUND != 0)
+    last = int(np.argmax(r.t_s >= r.t_leader_finish_s - 1e-9))
+    assert not np.any(done[last:]), "Leader 已走完全部车道却仍因'折返在即'停船"
+    assert not r.meta["timed_out"]

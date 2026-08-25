@@ -39,7 +39,9 @@ Faulty Towers、Cuchalainn、Crab Basin、Stonehenge、Twin Peaks、Cauldron 等
 
 ## 产物
 
-`outputs/`
+`outputs/scenarios/mothra/`(多场景 registry 落地后, Mothra 与其它场景同构,
+不再落在 `outputs/` 根目录; 其它场景见 `scenarios.json` 与
+`00_find_scenarios.py` / `00b_plot_scenario_overview.py`)
 
 | 文件 | 内容 |
 |---|---|

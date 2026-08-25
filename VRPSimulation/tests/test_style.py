@@ -159,6 +159,7 @@ def test_viz_module_constants_track_the_contract():
 # ======================================================================
 def test_snapshot_honors_marker_size_and_linewidth(mw, timeline):
     import matplotlib.pyplot as plt
+    from matplotlib.colors import to_rgb
 
     st = DEFAULT_STYLE.with_overrides(target_marker_size=180.0, traj_linewidth=5.5,
                                       follower_marker_size=21.0)
@@ -168,7 +169,11 @@ def test_snapshot_honors_marker_size_and_linewidth(mw, timeline):
     assert ax.collections, "该时刻应有目标被画出"
     for c in ax.collections:
         assert float(np.asarray(c.get_sizes()).max()) == pytest.approx(180.0)
-    traj = [ln for ln in ax.lines if len(ln.get_xdata()) > 2]
+    # >2 个点的线里, Leader 自己走过的测线(多车道起也是多点折线)用的是
+    # track_linewidth,不是这里在测的 traj_linewidth —— 按颜色排除掉它,
+    # 只留 Follower 轨迹。
+    traj = [ln for ln in ax.lines if len(ln.get_xdata()) > 2
+           and to_rgb(ln.get_color()) != to_rgb(st.leader_color)]
     assert traj and all(ln.get_linewidth() == pytest.approx(5.5) for ln in traj)
     marks = [ln for ln in ax.lines if len(ln.get_xdata()) == 1]
     assert any(ln.get_markersize() == pytest.approx(21.0) for ln in marks)
@@ -225,11 +230,14 @@ def test_plot_world_honors_style(mw):
 def test_trajectory_halo_follows_style(mw, timeline):
     """彩色底图上轨迹要有深色描边;设 0 必须真的关掉(灰度底图下用)。"""
     import matplotlib.pyplot as plt
+    from matplotlib.colors import to_rgb
 
     def traj_lines(style):
         _, ax = plt.subplots()
         plot_mission_snapshot(ax, mw, timeline, 300.0, style=style)
-        out = [ln for ln in ax.lines if len(ln.get_xdata()) > 2]
+        # Leader 自己的测线(多点折线)不描边, 排除掉, 只看 Follower 轨迹。
+        out = [ln for ln in ax.lines if len(ln.get_xdata()) > 2
+              and to_rgb(ln.get_color()) != to_rgb(style.leader_color)]
         plt.close(ax.figure)
         return out
 
@@ -242,10 +250,12 @@ def test_trajectory_halo_follows_style(mw, timeline):
 def test_scale_knobs_still_override_style(mw, timeline):
     """临时试参数用的单点覆盖仍然优先于 style。"""
     import matplotlib.pyplot as plt
+    from matplotlib.colors import to_rgb
 
     st = DEFAULT_STYLE.with_overrides(traj_linewidth=1.0)
     _, ax = plt.subplots()
     plot_mission_snapshot(ax, mw, timeline, 300.0, style=st, traj_linewidth=7.0)
-    traj = [ln for ln in ax.lines if len(ln.get_xdata()) > 2]
+    traj = [ln for ln in ax.lines if len(ln.get_xdata()) > 2
+           and to_rgb(ln.get_color()) != to_rgb(st.leader_color)]
     assert traj and all(ln.get_linewidth() == pytest.approx(7.0) for ln in traj)
     plt.close(ax.figure)

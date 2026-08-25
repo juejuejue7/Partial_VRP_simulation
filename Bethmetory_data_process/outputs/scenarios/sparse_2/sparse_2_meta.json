@@ -1,0 +1,121 @@
+{
+  "scenario": {
+    "id": "sparse_2",
+    "label": "Sparse #2 (off-axis, North)",
+    "kind": "searched",
+    "provenance": "00_find_scenarios.py preset=sparse 滑窗搜索候选 #2(10 m 粗格网, 100% 有效测深, dens 0.25-1.00/ha, area>=10ha)"
+  },
+  "source": {
+    "path": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoNorth1mArc.grd",
+    "driver": "netCDF",
+    "dtype": "float32",
+    "shape": [
+      2314,
+      6345
+    ],
+    "crs_embedded": null,
+    "crs_assigned": "EPSG:4326",
+    "nodata": NaN,
+    "cellsize_deg": 1.3397558219356448e-05,
+    "bounds": [
+      -129.1410066987791,
+      47.97399330122089,
+      -129.0559991918773,
+      48.004995250940475
+    ]
+  },
+  "crop_wgs84": {
+    "shape": [
+      473,
+      701
+    ],
+    "n_cells": 331573,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2183.738037109375,
+    "z_max": -2116.05029296875,
+    "z_mean": -2155.7055256131853,
+    "z_std": 12.37389922659672,
+    "relief_m": 67.687744140625,
+    "crs": "EPSG:4326",
+    "bounds_lon_lat": [
+      -129.06991925486722,
+      47.99233455842319,
+      -129.06052756655544,
+      47.99867160346094
+    ],
+    "cellsize_deg": 1.3397558219356448e-05,
+    "requested_bbox": {
+      "lon_min": -129.06991610265547,
+      "lon_max": -129.06052766338357,
+      "lat_min": 47.99233734285973,
+      "lat_max": 47.99866817400741
+    }
+  },
+  "utm9n_1m": {
+    "shape": [
+      705,
+      702
+    ],
+    "n_cells": 494910,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2183.271465311682,
+    "z_max": -2116.3698354254716,
+    "z_mean": -2155.7044742812327,
+    "z_std": 12.386249745471089,
+    "relief_m": 66.90162988621023,
+    "crs": "EPSG:32609",
+    "resolution_m": [
+      1.0,
+      1.0
+    ],
+    "bounds_utm": [
+      494783.0,
+      5315450.0,
+      495485.0,
+      5316155.0
+    ],
+    "resampling": "bilinear",
+    "transform": [
+      494783.0,
+      1.0,
+      0.0,
+      5316155.0,
+      0.0,
+      -1.0
+    ]
+  },
+  "outputs": [
+    "sparse_2_bundle.npz",
+    "sparse_2_meta.json",
+    "sparse_2_utm9n_1m.asc",
+    "sparse_2_utm9n_1m.asc.aux.xml",
+    "sparse_2_utm9n_1m.npz",
+    "sparse_2_utm9n_1m.prj",
+    "sparse_2_utm9n_1m.tif",
+    "sparse_2_vents.csv",
+    "sparse_2_vents.geojson",
+    "sparse_2_wgs84.asc",
+    "sparse_2_wgs84.asc.aux.xml",
+    "sparse_2_wgs84.prj",
+    "sparse_2_wgs84.tif"
+  ],
+  "vents": {
+    "source": "Bethy_data/TABLE_SI.xlsx (Supplemental Table S1)",
+    "selection": "经纬度落在 crop_wgs84.bounds_lon_lat 内(几何口径, 非标签口径)",
+    "cross_check": "searched 场景无对应 Vent Field Name 标签, 跳过交叉核对",
+    "n_total_in_table": 572,
+    "n_selected": 46,
+    "by_morphology": {
+      "chimney": 40,
+      "mound": 6
+    },
+    "height_m_range": [
+      3,
+      17
+    ],
+    "named": [],
+    "note": "height_m = 烟囱高出海底的高度(表中给定); seafloor_depth_m = 本项目栅格在该点的海底水深(负向下), 两者含义不同"
+  }
+}

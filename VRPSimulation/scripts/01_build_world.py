@@ -1,12 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""01 — 构建 Mothra 静态基础世界并落盘 + 打印校验摘要。
+"""01 — 构建静态基础世界并落盘 + 打印校验摘要。
 
-输入 : VRPSimulation/waypoints/mothra_waypoints.csv
-输出 : VRPSimulation/data/mothra_world.npz      静态世界(目标点 + 概率场 + meta)
-       VRPSimulation/data/mothra_basemap.npz    出图底色(可选,上游 bundle 存在时才生成)
+输入 : --scenario mothra(默认): VRPSimulation/waypoints/mothra_waypoints.csv
+       --scenario <id>(其它场景): Bethmetory_data_process 的场景产物, 整幅不裁切
+输出(统一落在 VRPSimulation/data/scenarios/<id>/, <id> 含 mothra 本身):
+       world.npz     静态世界(目标点 + 概率场 + meta)
+       basemap.npz   出图底色(可选,上游 bundle 存在时才生成)
+
+--scenario mothra 走完整诊断(D2 椭球残差交叉校验 + Leader 测线/窗口枚举,均为
+Mothra 契约冻结值的专属校验)。其它场景没有对应的契约阈值可比, 走精简流程:
+只建世界、存盘、打印基本规模, 不跑那两段 Mothra 专属诊断。
 
 运行:  D:/nixingxing/Anaconda/envs/auv_py310/python.exe VRPSimulation/scripts/01_build_world.py
+       D:/nixingxing/Anaconda/envs/auv_py310/python.exe VRPSimulation/scripts/01_build_world.py --scenario mef
        只需 numpy(matplotlib 在 02 里才用到)。
 """
 from __future__ import annotations
@@ -29,16 +36,68 @@ from vrpsim.geodesy import wgs84_to_ned_ellipsoidal
 from vrpsim.viz import export_basemap
 from vrpsim.windows import (enumerate_windows, first_seen_window, leader_track,
                             window_occupancy)
-from vrpsim.world import build_mothra_world, load_world, save_world
+from vrpsim.world import build_mothra_world, build_world_for_scenario, load_world, save_world
 
 
 def _pairwise(u: np.ndarray, v: np.ndarray) -> np.ndarray:
     return np.hypot(u[:, None] - u[None, :], v[:, None] - v[None, :])
 
 
+def _build_and_save_generic(scenario_id: str, outdir: str, args) -> None:
+    """非 Mothra 场景的精简流程: 建世界 → 存盘, 跳过 Mothra 契约专属诊断。"""
+    from vrpsim.contracts.dataset import TARGET_TYPES  # noqa: F401 (仅用于说明, 保留可读性)
+
+    print(f"[1/3] 构建场景 {scenario_id} 的静态世界(整幅, 不做 D7 裁切)")
+    mw = build_world_for_scenario(
+        scenario_id, res_m=args.res_m,
+        field_build=FieldBuildConfig(bandwidth_m=args.bandwidth_m, weight_mode=args.weight_mode),
+        window_advance_threshold_m=args.advance_m)
+    ds = mw.dataset
+    print(f"  世界 {mw.world.x_max_m:.0f}x{mw.world.y_max_m:.0f} m, 目标 {ds.n} 个:"
+          f"chimney {mw.meta['n_chimney']} / mound {mw.meta['n_mound']}")
+    print(f"  原点 UTM9N E{mw.frame.origin_easting_m:.1f} N{mw.frame.origin_northing_m:.1f}"
+          f"  = lon {mw.frame.origin_lon_deg:.9f} / lat {mw.frame.origin_lat_deg:.9f}")
+    print(f"  D(向下为正) {ds.depth_D_m.min():.2f} .. {ds.depth_D_m.max():.2f} m")
+    f = mw.field
+    print(f"  概率场 形状 {f.shape} 值域 {f.min():.4f} .. {f.max():.4f} 均值 {f.mean():.4f}")
+
+    print("[2/3] 落盘")
+    os.makedirs(outdir, exist_ok=True)
+    world_npz = os.path.join(outdir, "world.npz")
+    save_world(mw, world_npz)
+    back = load_world(world_npz)
+    same = (np.array_equal(back.field, mw.field)
+            and np.array_equal(back.dataset.targets_ned, ds.targets_ned)
+            and np.array_equal(back.dataset.type_, ds.type_))
+    print(f"  {os.path.basename(world_npz):16s} {os.path.getsize(world_npz) / 1024:8.1f} KB"
+          f"   round-trip 逐位相等: {same}")
+    if not same:
+        raise SystemExit("save/load 未逐位复现 —— 中止")
+
+    # 场景自己的上游 bundle(Bethmetory_data_process 产出), 不是 Mothra 那份
+    from vrpsim.world import _scenario_paths
+    sc, data_outdir, prefix = _scenario_paths(scenario_id)
+    src_bundle = str(data_outdir / f"{prefix}_bundle.npz")
+    crop = CropConfig(north_m=(0.0, mw.frame.north_extent_m),
+                      east_m=(0.0, mw.frame.east_extent_m))
+    base_npz = os.path.join(outdir, "basemap.npz")
+    got = export_basemap(base_npz, src_bundle=src_bundle, crop=crop)
+    if got:
+        print(f"  {os.path.basename(base_npz):16s} {os.path.getsize(base_npz) / 1024:8.1f} KB"
+              f"   (仅供出图,非环境层)")
+    else:
+        print(f"  底图跳过:上游 {src_bundle} 不存在(可选项,不影响仿真)")
+
+    print("[3/3] 完成。下一步:python VRPSimulation/scripts/05_plot_mission.py"
+          f" --scenario {scenario_id}(先跑 04_run_mission.py --scenario {scenario_id})")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--scenario", default="mothra",
+                    help="Bethmetory_data_process/scenarios.json 里的场景 id "
+                         "(默认 mothra, 走完整 D2 诊断流程)")
     ap.add_argument("--res-m", type=float, default=1.0, help="栅格分辨率(默认 1.0,与水深栅格同构)")
     ap.add_argument("--bandwidth-m", type=float, default=3.0, help="KDE 带宽 sigma")
     ap.add_argument("--weight-mode", choices=("uniform", "height"), default="uniform",
@@ -46,9 +105,16 @@ def main() -> None:
     ap.add_argument("--advance-m", type=float, default=50.0,
                     help="窗口推进多少米触发一次重解(默认 50 = 半窗;待裁决项 5)")
     ap.add_argument("--no-crop", action="store_true",
-                    help="不裁切,建全幅 653x294 世界(溯源/对照用)")
-    ap.add_argument("--outdir", default=DEFAULT_DATA_DIR)
+                    help="不裁切,建全幅 653x294 世界(仅 mothra 场景适用;溯源/对照用)")
+    ap.add_argument("--outdir", default=None,
+                    help="默认写 VRPSimulation/data/scenarios/<id>/")
     args = ap.parse_args()
+
+    outdir = args.outdir or os.path.join(DEFAULT_DATA_DIR, "scenarios", args.scenario)
+
+    if args.scenario != "mothra":
+        _build_and_save_generic(args.scenario, outdir, args)
+        return
 
     cfg = MothraSimConfig(res_m=args.res_m,
                           crop=full_raster_crop() if args.no_crop else CropConfig(),
@@ -132,8 +198,8 @@ def main() -> None:
           f"；空窗 {int((occ == 0).sum())}/{len(occ)}")
 
     print("[5/6] 落盘")
-    os.makedirs(args.outdir, exist_ok=True)
-    world_npz = os.path.join(args.outdir, "mothra_world.npz")
+    os.makedirs(outdir, exist_ok=True)
+    world_npz = os.path.join(outdir, "world.npz")
     save_world(mw, world_npz)
     back = load_world(world_npz)
     same = (np.array_equal(back.field, mw.field)
@@ -144,7 +210,7 @@ def main() -> None:
     if not same:
         raise SystemExit("save/load 未逐位复现 —— 中止")
 
-    base_npz = os.path.join(args.outdir, "mothra_basemap.npz")
+    base_npz = os.path.join(outdir, "basemap.npz")
     got = export_basemap(base_npz, crop=cfg.crop)
     if got:
         print(f"  {os.path.basename(base_npz):28s} {os.path.getsize(base_npz) / 1024:8.1f} KB"

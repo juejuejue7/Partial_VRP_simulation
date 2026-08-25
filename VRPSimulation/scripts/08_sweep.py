@@ -74,7 +74,9 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--usbl-period", type=float, default=d.usbl_period_s,
                     help="USBL 定位周期 [s],**不参与排列**,固定住才能看清规划周期的效应")
     ap.add_argument("--dwell", type=float, default=d.dwell_time_s)
-    ap.add_argument("--solver", choices=("ortools", "greedy"), default=d.solver)
+    ap.add_argument("--solver", choices=("exact", "ortools", "greedy"),
+                    default=d.solver,
+                    help="求解器口径(D21):exact=小规模池走 Held-Karp 精确最优、超阈值退 ortools;ortools=一律元启发式(消融对照);greedy=确定性贪心")
     ap.add_argument("--vrp-time-limit", type=float, default=d.vrp_time_limit_s)
     ap.add_argument("--max-time", type=float, default=6000.0,
                     help="仿真时钟上限 [s];Leader 慢 + 停船等待会让任务变长")

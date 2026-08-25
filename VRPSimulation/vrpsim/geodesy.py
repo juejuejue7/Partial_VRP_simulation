@@ -157,49 +157,59 @@ def utm9n_to_wgs84(easting, northing) -> Tuple[np.ndarray, np.ndarray]:
 # ======================================================================
 # 2. UTM 9N <-> NED(D2:换轴 + 平移,无旋转无缩放)
 # ======================================================================
-def utm9n_to_ned(easting, northing, z_up_m=0.0
+def utm9n_to_ned(easting, northing, z_up_m=0.0, *, origin_utm9n=ORIGIN_UTM9N
                  ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """UTM 9N + 高程 → NED (x_N, y_E, z_D)。
 
     z_up_m 是**向上为正**的高程(海底水深即负值,如 -2283.0);
     返回的 z_D **向下为正**(= -z_up_m)。
+
+    origin_utm9n: (easting, northing) 原点,默认 Mothra 的 D2 冻结值
+    `ORIGIN_UTM9N`。其它场景(非 Mothra)传各自的栅格西南角, 不改这个默认值 ——
+    Mothra 调用方不传此参数时行为逐位不变。
     """
     e = np.asarray(easting, dtype=np.float64)
     n = np.asarray(northing, dtype=np.float64)
     z_up = np.asarray(z_up_m, dtype=np.float64)
 
-    x_north = n - ORIGIN_UTM9N[1]
-    y_east = e - ORIGIN_UTM9N[0]
+    x_north = n - origin_utm9n[1]
+    y_east = e - origin_utm9n[0]
     z_down = -z_up
     return x_north, y_east, np.broadcast_to(z_down, x_north.shape).astype(np.float64)
 
 
-def ned_to_utm9n(x_north_m, y_east_m, z_down_m=0.0
+def ned_to_utm9n(x_north_m, y_east_m, z_down_m=0.0, *, origin_utm9n=ORIGIN_UTM9N
                  ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """NED → UTM 9N + 向上为正的高程。`utm9n_to_ned` 的逆。"""
+    """NED → UTM 9N + 向上为正的高程。`utm9n_to_ned` 的逆。
+
+    origin_utm9n: 见 `utm9n_to_ned`,默认 Mothra 冻结值。
+    """
     x = np.asarray(x_north_m, dtype=np.float64)
     y = np.asarray(y_east_m, dtype=np.float64)
     zd = np.asarray(z_down_m, dtype=np.float64)
 
-    easting = y + ORIGIN_UTM9N[0]
-    northing = x + ORIGIN_UTM9N[1]
+    easting = y + origin_utm9n[0]
+    northing = x + origin_utm9n[1]
     return easting, northing, np.broadcast_to(-zd, easting.shape).astype(np.float64)
 
 
 # ======================================================================
 # 3. WGS84 <-> NED(运行时授权路径:组合 1 与 2)
 # ======================================================================
-def wgs84_to_ned(lon_deg, lat_deg, z_up_m=0.0
+def wgs84_to_ned(lon_deg, lat_deg, z_up_m=0.0, *, origin_utm9n=ORIGIN_UTM9N
                  ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """经纬度 → NED (x_N, y_E, z_D)。**本仿真的授权换算(D2)**。"""
+    """经纬度 → NED (x_N, y_E, z_D)。**本仿真的授权换算(D2)**。
+
+    origin_utm9n: 见 `utm9n_to_ned`,默认 Mothra 冻结值; 其它场景传各自原点。
+    """
     e, n = wgs84_to_utm9n(lon_deg, lat_deg)
-    return utm9n_to_ned(e, n, z_up_m)
+    return utm9n_to_ned(e, n, z_up_m, origin_utm9n=origin_utm9n)
 
 
-def ned_to_wgs84(x_north_m, y_east_m, z_down_m=0.0
+def ned_to_wgs84(x_north_m, y_east_m, z_down_m=0.0, *, origin_utm9n=ORIGIN_UTM9N
                  ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """NED → (lon, lat, z_up)。`wgs84_to_ned` 的逆。"""
-    e, n, z_up = ned_to_utm9n(x_north_m, y_east_m, z_down_m)
+    e, n, z_up = ned_to_utm9n(x_north_m, y_east_m, z_down_m, origin_utm9n=origin_utm9n)
     lon, lat = utm9n_to_wgs84(e, n)
     return lon, lat, z_up
 

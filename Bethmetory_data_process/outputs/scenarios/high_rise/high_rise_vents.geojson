@@ -1,0 +1,1520 @@
+{
+ "type": "FeatureCollection",
+ "name": "high_rise_vents",
+ "crs": {
+  "type": "name",
+  "properties": {
+   "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+  }
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088703674,
+     47.965304272
+    ]
+   },
+   "properties": {
+    "orig_order": 126,
+    "sequence_id": 326,
+    "height_m": 7,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 50.9438,
+    "utm9n_easting": 493378.67,
+    "utm9n_northing": 5312447.757,
+    "seafloor_depth_m": -2157.949,
+    "col_wgs84": 80,
+    "row_wgs84": 386,
+    "col_utm1m": 80,
+    "row_utm1m": 575
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087959307,
+     47.965326347
+    ]
+   },
+   "properties": {
+    "orig_order": 125,
+    "sequence_id": 327,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 105.1968,
+    "utm9n_easting": 493434.236,
+    "utm9n_northing": 5312450.147,
+    "seafloor_depth_m": -2172.038,
+    "col_wgs84": 136,
+    "row_wgs84": 384,
+    "col_utm1m": 136,
+    "row_utm1m": 572
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088080246,
+     47.965410284
+    ]
+   },
+   "properties": {
+    "orig_order": 124,
+    "sequence_id": 328,
+    "height_m": 19,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 94.6611,
+    "utm9n_easting": 493425.219,
+    "utm9n_northing": 5312459.486,
+    "seafloor_depth_m": -2158.717,
+    "col_wgs84": 127,
+    "row_wgs84": 378,
+    "col_utm1m": 127,
+    "row_utm1m": 563
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088522352,
+     47.965427739
+    ]
+   },
+   "properties": {
+    "orig_order": 123,
+    "sequence_id": 329,
+    "height_m": 9,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 61.8373,
+    "utm9n_easting": 493392.22,
+    "utm9n_northing": 5312461.464,
+    "seafloor_depth_m": -2157.065,
+    "col_wgs84": 94,
+    "row_wgs84": 376,
+    "col_utm1m": 94,
+    "row_utm1m": 561
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088385246,
+     47.96549927
+    ]
+   },
+   "properties": {
+    "orig_order": 122,
+    "sequence_id": 330,
+    "height_m": 12,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 70.5035,
+    "utm9n_easting": 493402.464,
+    "utm9n_northing": 5312469.403,
+    "seafloor_depth_m": -2153.071,
+    "col_wgs84": 104,
+    "row_wgs84": 371,
+    "col_utm1m": 104,
+    "row_utm1m": 553
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.08785283,
+     47.965517353
+    ]
+   },
+   "properties": {
+    "orig_order": 121,
+    "sequence_id": 331,
+    "height_m": 7,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 109.2633,
+    "utm9n_easting": 493442.208,
+    "utm9n_northing": 5312471.367,
+    "seafloor_depth_m": -2166.29,
+    "col_wgs84": 144,
+    "row_wgs84": 370,
+    "col_utm1m": 144,
+    "row_utm1m": 551
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.08822779,
+     47.965573097
+    ]
+   },
+   "properties": {
+    "orig_order": 120,
+    "sequence_id": 332,
+    "height_m": 19,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "Fairy Castle",
+    "dist_from_axis_m": 80.6197,
+    "utm9n_easting": 493414.226,
+    "utm9n_northing": 5312477.595,
+    "seafloor_depth_m": -2150.976,
+    "col_wgs84": 116,
+    "row_wgs84": 365,
+    "col_utm1m": 116,
+    "row_utm1m": 545
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088020704,
+     47.965671259
+    ]
+   },
+   "properties": {
+    "orig_order": 119,
+    "sequence_id": 333,
+    "height_m": 12,
+    "morphology": "mound",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 93.9034,
+    "utm9n_easting": 493429.697,
+    "utm9n_northing": 5312488.487,
+    "seafloor_depth_m": -2152.47,
+    "col_wgs84": 131,
+    "row_wgs84": 358,
+    "col_utm1m": 131,
+    "row_utm1m": 534
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088488264,
+     47.965701603
+    ]
+   },
+   "properties": {
+    "orig_order": 118,
+    "sequence_id": 334,
+    "height_m": 12,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 58.9563,
+    "utm9n_easting": 493394.8,
+    "utm9n_northing": 5312491.9,
+    "seafloor_depth_m": -2159.232,
+    "col_wgs84": 96,
+    "row_wgs84": 356,
+    "col_utm1m": 96,
+    "row_utm1m": 531
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087969704,
+     47.965758259
+    ]
+   },
+   "properties": {
+    "orig_order": 117,
+    "sequence_id": 335,
+    "height_m": 17,
+    "morphology": "mound",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 95.9394,
+    "utm9n_easting": 493433.515,
+    "utm9n_northing": 5312498.153,
+    "seafloor_depth_m": -2148.572,
+    "col_wgs84": 135,
+    "row_wgs84": 352,
+    "col_utm1m": 135,
+    "row_utm1m": 524
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.08851182,
+     47.965860966
+    ]
+   },
+   "properties": {
+    "orig_order": 116,
+    "sequence_id": 336,
+    "height_m": 9,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 54.0919,
+    "utm9n_easting": 493393.062,
+    "utm9n_northing": 5312509.614,
+    "seafloor_depth_m": -2158.866,
+    "col_wgs84": 94,
+    "row_wgs84": 344,
+    "col_utm1m": 95,
+    "row_utm1m": 513
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087729522,
+     47.965889042
+    ]
+   },
+   "properties": {
+    "orig_order": 115,
+    "sequence_id": 337,
+    "height_m": 13,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 111.013,
+    "utm9n_easting": 493451.46,
+    "utm9n_northing": 5312512.668,
+    "seafloor_depth_m": -2164.254,
+    "col_wgs84": 153,
+    "row_wgs84": 342,
+    "col_utm1m": 153,
+    "row_utm1m": 510
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.089194357,
+     47.966389118
+    ]
+   },
+   "properties": {
+    "orig_order": 114,
+    "sequence_id": 338,
+    "height_m": 9,
+    "morphology": "mound",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 6.4374,
+    "utm9n_easting": 493342.182,
+    "utm9n_northing": 5312568.375,
+    "seafloor_depth_m": -2175.062,
+    "col_wgs84": 43,
+    "row_wgs84": 305,
+    "col_utm1m": 44,
+    "row_utm1m": 454
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.0886317,
+     47.966844314
+    ]
+   },
+   "properties": {
+    "orig_order": 110,
+    "sequence_id": 342,
+    "height_m": 18,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 25.9721,
+    "utm9n_easting": 493384.239,
+    "utm9n_northing": 5312618.919,
+    "seafloor_depth_m": -2162.15,
+    "col_wgs84": 85,
+    "row_wgs84": 271,
+    "col_utm1m": 86,
+    "row_utm1m": 404
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.0887097,
+     47.966846314
+    ]
+   },
+   "properties": {
+    "orig_order": 109,
+    "sequence_id": 343,
+    "height_m": 7,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 20.1954,
+    "utm9n_easting": 493378.417,
+    "utm9n_northing": 5312619.148,
+    "seafloor_depth_m": -2164.542,
+    "col_wgs84": 80,
+    "row_wgs84": 270,
+    "col_utm1m": 80,
+    "row_utm1m": 403
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088348081,
+     47.9669245
+    ]
+   },
+   "properties": {
+    "orig_order": 108,
+    "sequence_id": 344,
+    "height_m": 15,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 45.3425,
+    "utm9n_easting": 493405.419,
+    "utm9n_northing": 5312627.807,
+    "seafloor_depth_m": -2153.812,
+    "col_wgs84": 107,
+    "row_wgs84": 265,
+    "col_utm1m": 107,
+    "row_utm1m": 395
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088370255,
+     47.966944244
+    ]
+   },
+   "properties": {
+    "orig_order": 107,
+    "sequence_id": 345,
+    "height_m": 18,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 43.3419,
+    "utm9n_easting": 493403.767,
+    "utm9n_northing": 5312630.003,
+    "seafloor_depth_m": -2154.845,
+    "col_wgs84": 105,
+    "row_wgs84": 263,
+    "col_utm1m": 105,
+    "row_utm1m": 392
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088253775,
+     47.967020176
+    ]
+   },
+   "properties": {
+    "orig_order": 106,
+    "sequence_id": 346,
+    "height_m": 12,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 50.4936,
+    "utm9n_easting": 493412.471,
+    "utm9n_northing": 5312638.433,
+    "seafloor_depth_m": -2154.544,
+    "col_wgs84": 114,
+    "row_wgs84": 257,
+    "col_utm1m": 114,
+    "row_utm1m": 384
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088184252,
+     47.967028375
+    ]
+   },
+   "properties": {
+    "orig_order": 105,
+    "sequence_id": 347,
+    "height_m": 7,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 55.456,
+    "utm9n_easting": 493417.661,
+    "utm9n_northing": 5312639.338,
+    "seafloor_depth_m": -2156.452,
+    "col_wgs84": 119,
+    "row_wgs84": 257,
+    "col_utm1m": 119,
+    "row_utm1m": 383
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088009437,
+     47.967073707
+    ]
+   },
+   "properties": {
+    "orig_order": 104,
+    "sequence_id": 348,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 67.4718,
+    "utm9n_easting": 493430.716,
+    "utm9n_northing": 5312644.362,
+    "seafloor_depth_m": -2152.64,
+    "col_wgs84": 132,
+    "row_wgs84": 253,
+    "col_utm1m": 132,
+    "row_utm1m": 378
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088114807,
+     47.967081624
+    ]
+   },
+   "properties": {
+    "orig_order": 103,
+    "sequence_id": 349,
+    "height_m": 8,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 59.5707,
+    "utm9n_easting": 493422.851,
+    "utm9n_northing": 5312645.251,
+    "seafloor_depth_m": -2153.194,
+    "col_wgs84": 124,
+    "row_wgs84": 253,
+    "col_utm1m": 124,
+    "row_utm1m": 377
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088052733,
+     47.967140044
+    ]
+   },
+   "properties": {
+    "orig_order": 101,
+    "sequence_id": 351,
+    "height_m": 4,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 63.0464,
+    "utm9n_easting": 493427.492,
+    "utm9n_northing": 5312651.739,
+    "seafloor_depth_m": -2153.096,
+    "col_wgs84": 129,
+    "row_wgs84": 248,
+    "col_utm1m": 129,
+    "row_utm1m": 371
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.089330539,
+     47.967170689
+    ]
+   },
+   "properties": {
+    "orig_order": 100,
+    "sequence_id": 352,
+    "height_m": 6,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 31.5476,
+    "utm9n_easting": 493332.117,
+    "utm9n_northing": 5312655.254,
+    "seafloor_depth_m": -2173.69,
+    "col_wgs84": 33,
+    "row_wgs84": 246,
+    "col_utm1m": 34,
+    "row_utm1m": 367
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.089641539,
+     47.967173689
+    ]
+   },
+   "properties": {
+    "orig_order": 99,
+    "sequence_id": 353,
+    "height_m": 13,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 54.4872,
+    "utm9n_easting": 493308.904,
+    "utm9n_northing": 5312655.615,
+    "seafloor_depth_m": -2174.083,
+    "col_wgs84": 10,
+    "row_wgs84": 246,
+    "col_utm1m": 10,
+    "row_utm1m": 367
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088780538,
+     47.967201688
+    ]
+   },
+   "properties": {
+    "orig_order": 98,
+    "sequence_id": 354,
+    "height_m": 6,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "Knight",
+    "dist_from_axis_m": 8.3423,
+    "utm9n_easting": 493373.175,
+    "utm9n_northing": 5312658.652,
+    "seafloor_depth_m": -2170.557,
+    "col_wgs84": 74,
+    "row_wgs84": 244,
+    "col_utm1m": 75,
+    "row_utm1m": 364
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088960613,
+     47.967511041
+    ]
+   },
+   "properties": {
+    "orig_order": 96,
+    "sequence_id": 356,
+    "height_m": 6,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 10.6883,
+    "utm9n_easting": 493359.773,
+    "utm9n_northing": 5312693.051,
+    "seafloor_depth_m": -2171.744,
+    "col_wgs84": 61,
+    "row_wgs84": 221,
+    "col_utm1m": 61,
+    "row_utm1m": 329
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088848222,
+     47.967609935
+    ]
+   },
+   "properties": {
+    "orig_order": 95,
+    "sequence_id": 357,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 4.4382,
+    "utm9n_easting": 493368.175,
+    "utm9n_northing": 5312704.033,
+    "seafloor_depth_m": -2171.883,
+    "col_wgs84": 69,
+    "row_wgs84": 213,
+    "col_utm1m": 70,
+    "row_utm1m": 318
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.089294538,
+     47.967621689
+    ]
+   },
+   "properties": {
+    "orig_order": 94,
+    "sequence_id": 358,
+    "height_m": 8,
+    "morphology": "mound",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 37.3984,
+    "utm9n_easting": 493334.862,
+    "utm9n_northing": 5312705.378,
+    "seafloor_depth_m": -2164.945,
+    "col_wgs84": 36,
+    "row_wgs84": 212,
+    "col_utm1m": 36,
+    "row_utm1m": 317
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.089370383,
+     47.967644357
+    ]
+   },
+   "properties": {
+    "orig_order": 93,
+    "sequence_id": 359,
+    "height_m": 12,
+    "morphology": "mound",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 43.4338,
+    "utm9n_easting": 493329.204,
+    "utm9n_northing": 5312707.904,
+    "seafloor_depth_m": -2160.358,
+    "col_wgs84": 30,
+    "row_wgs84": 211,
+    "col_utm1m": 31,
+    "row_utm1m": 315
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088797298,
+     47.967683202
+    ]
+   },
+   "properties": {
+    "orig_order": 92,
+    "sequence_id": 360,
+    "height_m": 6,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 2.2452,
+    "utm9n_easting": 493371.985,
+    "utm9n_northing": 5312712.172,
+    "seafloor_depth_m": -2171.23,
+    "col_wgs84": 73,
+    "row_wgs84": 208,
+    "col_utm1m": 73,
+    "row_utm1m": 310
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088470036,
+     47.967689357
+    ]
+   },
+   "properties": {
+    "orig_order": 91,
+    "sequence_id": 361,
+    "height_m": 3,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 21.6125,
+    "utm9n_easting": 493396.414,
+    "utm9n_northing": 5312712.828,
+    "seafloor_depth_m": -2175.678,
+    "col_wgs84": 98,
+    "row_wgs84": 207,
+    "col_utm1m": 98,
+    "row_utm1m": 310
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088355721,
+     47.967757949
+    ]
+   },
+   "properties": {
+    "orig_order": 90,
+    "sequence_id": 362,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "Blue Moon",
+    "dist_from_axis_m": 28.55,
+    "utm9n_easting": 493404.955,
+    "utm9n_northing": 5312720.442,
+    "seafloor_depth_m": -2175.847,
+    "col_wgs84": 106,
+    "row_wgs84": 202,
+    "col_utm1m": 106,
+    "row_utm1m": 302
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088420572,
+     47.967790686
+    ]
+   },
+   "properties": {
+    "orig_order": 89,
+    "sequence_id": 363,
+    "height_m": 10,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 23.1087,
+    "utm9n_easting": 493400.119,
+    "utm9n_northing": 5312724.086,
+    "seafloor_depth_m": -2175.407,
+    "col_wgs84": 101,
+    "row_wgs84": 200,
+    "col_utm1m": 102,
+    "row_utm1m": 298
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087480989,
+     47.96787322
+    ]
+   },
+   "properties": {
+    "orig_order": 88,
+    "sequence_id": 364,
+    "height_m": 13,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "Baltic",
+    "dist_from_axis_m": 90.2417,
+    "utm9n_easting": 493470.261,
+    "utm9n_northing": 5312733.179,
+    "seafloor_depth_m": -2151.363,
+    "col_wgs84": 171,
+    "row_wgs84": 194,
+    "col_utm1m": 172,
+    "row_utm1m": 289
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088280564,
+     47.968039417
+    ]
+   },
+   "properties": {
+    "orig_order": 87,
+    "sequence_id": 365,
+    "height_m": 7,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 28.1439,
+    "utm9n_easting": 493410.601,
+    "utm9n_northing": 5312751.719,
+    "seafloor_depth_m": -2169.31,
+    "col_wgs84": 112,
+    "row_wgs84": 181,
+    "col_utm1m": 112,
+    "row_utm1m": 271
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088304189,
+     47.968121826
+    ]
+   },
+   "properties": {
+    "orig_order": 86,
+    "sequence_id": 366,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 24.6807,
+    "utm9n_easting": 493408.848,
+    "utm9n_northing": 5312760.88,
+    "seafloor_depth_m": -2172.25,
+    "col_wgs84": 110,
+    "row_wgs84": 175,
+    "col_utm1m": 110,
+    "row_utm1m": 262
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087932628,
+     47.968166513
+    ]
+   },
+   "properties": {
+    "orig_order": 85,
+    "sequence_id": 367,
+    "height_m": 8,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 50.9735,
+    "utm9n_easting": 493436.587,
+    "utm9n_northing": 5312765.815,
+    "seafloor_depth_m": -2167.753,
+    "col_wgs84": 138,
+    "row_wgs84": 172,
+    "col_utm1m": 138,
+    "row_utm1m": 257
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087526257,
+     47.968233948
+    ]
+   },
+   "properties": {
+    "orig_order": 84,
+    "sequence_id": 368,
+    "height_m": 20,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "Park Place",
+    "dist_from_axis_m": 79.0987,
+    "utm9n_easting": 493466.928,
+    "utm9n_northing": 5312773.276,
+    "seafloor_depth_m": -2146.575,
+    "col_wgs84": 168,
+    "row_wgs84": 167,
+    "col_utm1m": 168,
+    "row_utm1m": 249
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088252585,
+     47.968257907
+    ]
+   },
+   "properties": {
+    "orig_order": 83,
+    "sequence_id": 369,
+    "height_m": 6,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 25.5066,
+    "utm9n_easting": 493412.717,
+    "utm9n_northing": 5312776.001,
+    "seafloor_depth_m": -2170.814,
+    "col_wgs84": 114,
+    "row_wgs84": 165,
+    "col_utm1m": 114,
+    "row_utm1m": 246
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087739981,
+     47.968284144
+    ]
+   },
+   "properties": {
+    "orig_order": 82,
+    "sequence_id": 370,
+    "height_m": 10,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 62.3369,
+    "utm9n_easting": 493450.982,
+    "utm9n_northing": 5312778.873,
+    "seafloor_depth_m": -2161.902,
+    "col_wgs84": 152,
+    "row_wgs84": 163,
+    "col_utm1m": 152,
+    "row_utm1m": 244
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.08733462,
+     47.968371552
+    ]
+   },
+   "properties": {
+    "orig_order": 81,
+    "sequence_id": 371,
+    "height_m": 27,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "Boardwalk",
+    "dist_from_axis_m": 89.9289,
+    "utm9n_easting": 493481.249,
+    "utm9n_northing": 5312788.554,
+    "seafloor_depth_m": -2150.134,
+    "col_wgs84": 182,
+    "row_wgs84": 156,
+    "col_utm1m": 183,
+    "row_utm1m": 234
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087563166,
+     47.968446867
+    ]
+   },
+   "properties": {
+    "orig_order": 80,
+    "sequence_id": 372,
+    "height_m": 14,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 71.5072,
+    "utm9n_easting": 493464.2,
+    "utm9n_northing": 5312796.944,
+    "seafloor_depth_m": -2148.751,
+    "col_wgs84": 165,
+    "row_wgs84": 151,
+    "col_utm1m": 166,
+    "row_utm1m": 226
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087628435,
+     47.96858983
+    ]
+   },
+   "properties": {
+    "orig_order": 79,
+    "sequence_id": 373,
+    "height_m": 9,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 63.4534,
+    "utm9n_easting": 493459.346,
+    "utm9n_northing": 5312812.839,
+    "seafloor_depth_m": -2160.405,
+    "col_wgs84": 160,
+    "row_wgs84": 140,
+    "col_utm1m": 161,
+    "row_utm1m": 210
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087692493,
+     47.968635232
+    ]
+   },
+   "properties": {
+    "orig_order": 78,
+    "sequence_id": 374,
+    "height_m": 10,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 57.7315,
+    "utm9n_easting": 493454.571,
+    "utm9n_northing": 5312817.891,
+    "seafloor_depth_m": -2165.86,
+    "col_wgs84": 156,
+    "row_wgs84": 137,
+    "col_utm1m": 156,
+    "row_utm1m": 205
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087569636,
+     47.968638154
+    ]
+   },
+   "properties": {
+    "orig_order": 77,
+    "sequence_id": 375,
+    "height_m": 7,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 66.636,
+    "utm9n_easting": 493463.741,
+    "utm9n_northing": 5312818.205,
+    "seafloor_depth_m": -2160.648,
+    "col_wgs84": 165,
+    "row_wgs84": 137,
+    "col_utm1m": 165,
+    "row_utm1m": 204
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087356631,
+     47.968688953
+    ]
+   },
+   "properties": {
+    "orig_order": 75,
+    "sequence_id": 377,
+    "height_m": 9,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 81.0228,
+    "utm9n_easting": 493479.646,
+    "utm9n_northing": 5312823.833,
+    "seafloor_depth_m": -2155.304,
+    "col_wgs84": 181,
+    "row_wgs84": 133,
+    "col_utm1m": 181,
+    "row_utm1m": 199
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087533734,
+     47.968731394
+    ]
+   },
+   "properties": {
+    "orig_order": 73,
+    "sequence_id": 379,
+    "height_m": 13,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "Three Sisters",
+    "dist_from_axis_m": 67.1137,
+    "utm9n_easting": 493466.433,
+    "utm9n_northing": 5312828.565,
+    "seafloor_depth_m": -2160.159,
+    "col_wgs84": 167,
+    "row_wgs84": 130,
+    "col_utm1m": 168,
+    "row_utm1m": 194
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087984396,
+     47.968754262
+    ]
+   },
+   "properties": {
+    "orig_order": 71,
+    "sequence_id": 380,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 33.678,
+    "utm9n_easting": 493432.798,
+    "utm9n_northing": 5312831.145,
+    "seafloor_depth_m": -2171.523,
+    "col_wgs84": 134,
+    "row_wgs84": 128,
+    "col_utm1m": 134,
+    "row_utm1m": 191
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087809007,
+     47.968757114
+    ]
+   },
+   "properties": {
+    "orig_order": 72,
+    "sequence_id": 381,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 46.4203,
+    "utm9n_easting": 493445.889,
+    "utm9n_northing": 5312831.447,
+    "seafloor_depth_m": -2169.989,
+    "col_wgs84": 147,
+    "row_wgs84": 128,
+    "col_utm1m": 147,
+    "row_utm1m": 191
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087679115,
+     47.968967733
+    ]
+   },
+   "properties": {
+    "orig_order": 70,
+    "sequence_id": 382,
+    "height_m": 8,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 50.861,
+    "utm9n_easting": 493455.611,
+    "utm9n_northing": 5312854.846,
+    "seafloor_depth_m": -2170.864,
+    "col_wgs84": 157,
+    "row_wgs84": 112,
+    "col_utm1m": 157,
+    "row_utm1m": 168
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088272664,
+     47.969203936
+    ]
+   },
+   "properties": {
+    "orig_order": 68,
+    "sequence_id": 384,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 1.3641,
+    "utm9n_easting": 493411.339,
+    "utm9n_northing": 5312881.149,
+    "seafloor_depth_m": -2169.761,
+    "col_wgs84": 112,
+    "row_wgs84": 94,
+    "col_utm1m": 113,
+    "row_utm1m": 141
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088304888,
+     47.969229514
+    ]
+   },
+   "properties": {
+    "orig_order": 374,
+    "sequence_id": 385,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "",
+    "chimney_name": "",
+    "dist_from_axis_m": 1.6812,
+    "utm9n_easting": 493408.937,
+    "utm9n_northing": 5312883.995,
+    "seafloor_depth_m": -2170.268,
+    "col_wgs84": 110,
+    "row_wgs84": 92,
+    "col_utm1m": 110,
+    "row_utm1m": 139
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087181679,
+     47.969336915
+    ]
+   },
+   "properties": {
+    "orig_order": 67,
+    "sequence_id": 386,
+    "height_m": 5,
+    "morphology": "mound",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 76.4217,
+    "utm9n_easting": 493492.786,
+    "utm9n_northing": 5312895.836,
+    "seafloor_depth_m": -2169.688,
+    "col_wgs84": 194,
+    "row_wgs84": 84,
+    "col_utm1m": 194,
+    "row_utm1m": 127
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088067378,
+     47.969903549
+    ]
+   },
+   "properties": {
+    "orig_order": 66,
+    "sequence_id": 387,
+    "height_m": 8,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 3.4498,
+    "utm9n_easting": 493426.75,
+    "utm9n_northing": 5312958.89,
+    "seafloor_depth_m": -2160.594,
+    "col_wgs84": 128,
+    "row_wgs84": 42,
+    "col_utm1m": 128,
+    "row_utm1m": 64
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.088044378,
+     47.969941549
+    ]
+   },
+   "properties": {
+    "orig_order": 65,
+    "sequence_id": 388,
+    "height_m": 8,
+    "morphology": "chimney",
+    "vent_field": "HIgh Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 2.8555,
+    "utm9n_easting": 493428.471,
+    "utm9n_northing": 5312963.112,
+    "seafloor_depth_m": -2163.645,
+    "col_wgs84": 129,
+    "row_wgs84": 39,
+    "col_utm1m": 130,
+    "row_utm1m": 59
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087867886,
+     47.970058436
+    ]
+   },
+   "properties": {
+    "orig_order": 64,
+    "sequence_id": 389,
+    "height_m": 5,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 6.6092,
+    "utm9n_easting": 493441.659,
+    "utm9n_northing": 5312976.088,
+    "seafloor_depth_m": -2162.645,
+    "col_wgs84": 142,
+    "row_wgs84": 30,
+    "col_utm1m": 143,
+    "row_utm1m": 46
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087802713,
+     47.970136764
+    ]
+   },
+   "properties": {
+    "orig_order": 63,
+    "sequence_id": 390,
+    "height_m": 6,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 9.1171,
+    "utm9n_easting": 493446.534,
+    "utm9n_northing": 5312984.788,
+    "seafloor_depth_m": -2163.979,
+    "col_wgs84": 147,
+    "row_wgs84": 25,
+    "col_utm1m": 148,
+    "row_utm1m": 38
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.087840554,
+     47.970189451
+    ]
+   },
+   "properties": {
+    "orig_order": 62,
+    "sequence_id": 391,
+    "height_m": 4,
+    "morphology": "chimney",
+    "vent_field": "High Rise",
+    "chimney_name": "",
+    "dist_from_axis_m": 4.9052,
+    "utm9n_easting": 493443.716,
+    "utm9n_northing": 5312990.647,
+    "seafloor_depth_m": -2161.127,
+    "col_wgs84": 145,
+    "row_wgs84": 21,
+    "col_utm1m": 145,
+    "row_utm1m": 32
+   }
+  }
+ ]
+}

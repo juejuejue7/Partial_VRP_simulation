@@ -3,7 +3,7 @@
 """
 04 — Mothra 最简渲染图 (正式渲染方案)
 ================================================================================
-输入 : outputs/mothra_bundle.npz   (水深 + 28 个热液口; 无则退回只有水深的那份)
+输入 : outputs/scenarios/mothra/mothra_bundle.npz   (水深 + 28 个热液口; 无则退回只有水深的那份)
 输出 : figures/mothra_plot.png
 
 只画地形本身: 经纬度坐标轴 + 比例尺 + 热液口标记。
@@ -167,8 +167,9 @@ def main() -> None:
 
     FIGDIR.mkdir(parents=True, exist_ok=True)
     
-    bundle = OUTDIR / "mothra_bundle.npz"
-    d = np.load(bundle if bundle.exists() else OUTDIR / "mothra_utm9n_1m.npz",
+    mothra_dir = OUTDIR / "scenarios" / "mothra"
+    bundle = mothra_dir / "mothra_bundle.npz"
+    d = np.load(bundle if bundle.exists() else mothra_dir / "mothra_utm9n_1m.npz",
                 allow_pickle=False)
     z = d["z_wgs84"].astype("float64")
     lon0, lat0, lon1, lat1 = [float(v) for v in d["bounds_wgs84"]]

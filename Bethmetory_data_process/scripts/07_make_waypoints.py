@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-07 — Mothra 热液口 -> 路径规划用 waypoint 表
+07 — 热液口 -> 路径规划用 waypoint 表(registry 驱动, 多场景)
 ================================================================================
-输入 : outputs/mothra_bundle.npz   (水深 + 28 个热液口, 由 06 生成)
-输出 : outputs/mothra_waypoints.csv        28 行, 纯表 (无注释行, 可直接 read_csv)
-       outputs/mothra_waypoints_meta.json  局部坐标系定义等元数据
+输入 : <outdir>/<prefix>_bundle.npz   (水深 + 热液口, 由 06 生成)
+输出 : <outdir>/<prefix>_waypoints.csv        N 行, 纯表 (无注释行, 可直接 read_csv)
+       <outdir>/<prefix>_waypoints_meta.json  局部坐标系定义等元数据
+       (outdir 统一为 outputs/scenarios/<id>/, <id> 含 mothra 本身)
 
 列:
     waypoint_id        1..28 的稳定编号。**不是访问顺序**, 只是标签;
@@ -43,10 +44,13 @@ mothra_vents.csv 里那一列 —— 后者采自 WGS84 原生栅格。两者在
 mothra_vents.csv 的同名列。
 
 运行环境: 只需 numpy (base 或 auv_py310 均可)
-    python scripts/07_make_waypoints.py
+    python scripts/07_make_waypoints.py                # 默认 --scenario mothra
+    python scripts/07_make_waypoints.py --scenario mef
+    python scripts/07_make_waypoints.py --all           # registry 里全部场景
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 from pathlib import Path
@@ -55,14 +59,35 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTDIR = ROOT / "outputs"
+REGISTRY = ROOT / "scenarios.json"
 
 FIELDS = ["waypoint_id", "sequence_id", "lon", "lat", "type", "height_m",
           "x_local_m", "y_local_m", "seafloor_depth_m",
           "utm9n_easting", "utm9n_northing", "name"]
 
 
-def main() -> None:
-    d = np.load(OUTDIR / "mothra_bundle.npz", allow_pickle=False)
+def load_registry() -> list[dict]:
+    return json.loads(REGISTRY.read_text(encoding="utf-8"))
+
+
+def find_scenario(scenario_id: str) -> dict:
+    for s in load_registry():
+        if s["id"] == scenario_id:
+            return s
+    raise KeyError(f"scenarios.json 里没有 id={scenario_id!r}")
+
+
+def process_scenario(scenario_id: str) -> None:
+    sc = find_scenario(scenario_id)
+    outdir = OUTDIR / "scenarios" / scenario_id
+    prefix = scenario_id
+
+    print(f"\n===== 场景 {scenario_id} ({sc['label']}) =====")
+    bundle_p = outdir / f"{prefix}_bundle.npz"
+    if not bundle_p.is_file():
+        raise FileNotFoundError(f"{bundle_p} 不存在, 先跑 06_extract_vents.py "
+                                f"--scenario {scenario_id}")
+    d = np.load(bundle_p, allow_pickle=False)
     n = len(d["vent_lon"])
     nrows, ncols = d["z_utm1m"].shape
     x0, y0, x1, y1 = [float(v) for v in d["bounds_utm"]]
@@ -117,16 +142,18 @@ def main() -> None:
         })
 
     print("[3/3] 写出")
-    p = OUTDIR / "mothra_waypoints.csv"
+    p = outdir / f"{prefix}_waypoints.csv"
     with p.open("w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS)
         w.writeheader()
         w.writerows(recs)
 
+    bundle_rel = str(bundle_p.relative_to(ROOT)).replace("\\", "/")
     meta = {
+        "scenario_id": scenario_id,
         "n_waypoints": n,
-        "source": "outputs/mothra_bundle.npz (由 06_extract_vents.py 从 "
-                  "Bethy_data/TABLE_SI.xlsx 提取, 已按 Mothra 裁剪 bbox 筛选)",
+        "source": f"{bundle_rel} (由 06_extract_vents.py 从 "
+                  f"Bethy_data/TABLE_SI.xlsx 提取, 已按 {sc['label']} 裁剪 bbox 筛选)",
         "waypoint_id_note": "1..N 的稳定标签, 沿用源表 sequence_id 顺序; "
                             "不代表访问顺序, 路径规划器自行决定次序",
         "local_frame": {
@@ -143,7 +170,7 @@ def main() -> None:
             "height_m": "烟囱/丘体高出海底的高度, 源表给定",
             "seafloor_depth_m": "UTM 1 m 栅格在该点格子的海底水深, 负向下; "
                                 "与 height_m 含义不同, 不要相加或混用。"
-                                "溯源用的 WGS84 原生采样值见 mothra_vents.csv "
+                                f"溯源用的 WGS84 原生采样值见 {prefix}_vents.csv "
                                 "同名列, 两者在陡坡处可差约 1.2 m",
             "type": "chimney / mound",
         },
@@ -153,16 +180,27 @@ def main() -> None:
         "local_extent_used_m": {"x": [float(xl.min()), float(xl.max())],
                                 "y": [float(yl.min()), float(yl.max())]},
     }
-    (OUTDIR / "mothra_waypoints_meta.json").write_text(
+    (outdir / f"{prefix}_waypoints_meta.json").write_text(
         json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print(f"  {p.name:32s} {p.stat().st_size / 1024:7.1f} KB  ({n} 行)")
-    q = OUTDIR / "mothra_waypoints_meta.json"
+    q = outdir / f"{prefix}_waypoints_meta.json"
     print(f"  {q.name:32s} {q.stat().st_size / 1024:7.1f} KB")
     print(f"  局部坐标跨度 x {xl.min():.1f}..{xl.max():.1f} m, "
           f"y {yl.min():.1f}..{yl.max():.1f} m")
     print(f"  类型 {meta['type_counts']}, 高度 "
           f"{meta['height_m_range'][0]:.0f}..{meta['height_m_range'][1]:.0f} m")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--scenario", default="mothra")
+    ap.add_argument("--all", action="store_true")
+    args = ap.parse_args()
+    ids = [s["id"] for s in load_registry()] if args.all else [args.scenario]
+    for sid in ids:
+        process_scenario(sid)
 
 
 if __name__ == "__main__":

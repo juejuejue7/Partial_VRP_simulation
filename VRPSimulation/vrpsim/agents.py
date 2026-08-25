@@ -39,21 +39,62 @@ class QueueItem:
 
 
 class Leader:
-    """沿测线前进的广域扫描 AUV。窗口前边界恒与其位置重合。
+    """沿多车道 lawnmower 测线前进的广域扫描 AUV。窗口前边界恒与其位置重合。
+
+    路径 `path`:(M,2) `[x_N, y_E]` 折线端点,M>=2,由
+    `vrpsim/windows.py::leader_track` 生成(boustrophedon 往复,车道间距 =
+    声呐幅宽 `window_cfg.width_m`,边到边覆盖、不留空档)。Leader 沿折线逐段
+    前进,到达一段终点即接着走下一段 —— 车道换道时航向 `psi` 跟着转向东西向,
+    这不是特例分支,是同一段推进逻辑的自然结果。
+
+    单车道场景(场地 East 跨度 <= 车道间距)的 `path` 退化为 2 个点的直线,
+    与旧版单测线实现逐位相同(Mothra 500x100 + 100m 窗口宽即此例)。
 
     ⚠ D16 起**不是匀速**:任务层每拍传 `hold=True` 就原地停船(速度置 0)。
       停不停由任务层按 Leader 自己的 DR 推算判(见 `contracts/mission.py` §8),
       本类只负责执行,不做判断 —— 免得运动学层去碰它不该知道的队友状态。
     """
 
-    def __init__(self, cfg: MissionConfig, track_end_north_m: float):
+    def __init__(self, cfg: MissionConfig, path: np.ndarray):
         self.cfg = cfg
-        self.north = float(cfg.leader_start_ned[0])
-        self.east = float(cfg.leader_start_ned[1])
-        self.psi = 0.0                      # 指 North
-        self.track_end = float(track_end_north_m)
+        p = np.asarray(path, dtype=FLOAT).reshape(-1, 2)
+        if p.shape[0] < 2:
+            raise ValueError(f"Leader 路径至少需要 2 个点(1 条测线),收到 {p.shape[0]} 个")
+        self.path = p
+        self._seg = 0                       # 当前所在折线段 [path[_seg], path[_seg+1]]
+        self._seg_progress_m = 0.0          # 本段已走过的距离
         self.distance_m = 0.0
         self.hold_time_s = 0.0              # 累计停船时长(诊断用)
+
+    def _seg_endpoints(self) -> Tuple[np.ndarray, np.ndarray]:
+        return self.path[self._seg], self.path[self._seg + 1]
+
+    def _seg_len(self) -> float:
+        a, b = self._seg_endpoints()
+        return float(np.hypot(*(b - a)))
+
+    @property
+    def north(self) -> float:
+        a, b = self._seg_endpoints()
+        L = self._seg_len()
+        frac = 0.0 if L <= 1e-12 else self._seg_progress_m / L
+        return float(a[0] + frac * (b[0] - a[0]))
+
+    @property
+    def east(self) -> float:
+        a, b = self._seg_endpoints()
+        L = self._seg_len()
+        frac = 0.0 if L <= 1e-12 else self._seg_progress_m / L
+        return float(a[1] + frac * (b[1] - a[1]))
+
+    @property
+    def psi(self) -> float:
+        """当前航向:从 North(+x)起、向 East(+y)为正(与 `msim/contracts/types.py` 同口径)。"""
+        a, b = self._seg_endpoints()
+        d = b - a
+        if np.hypot(*d) <= 1e-12:
+            return 0.0
+        return float(np.arctan2(d[1], d[0]))
 
     @property
     def pose(self) -> np.ndarray:
@@ -65,22 +106,50 @@ class Leader:
 
     @property
     def finished(self) -> bool:
-        return self.north >= self.track_end - 1e-9
+        """走完折线最后一段。"""
+        return (self._seg >= len(self.path) - 2
+                and self._seg_progress_m >= self._seg_len() - 1e-9)
+
+    @property
+    def dist_to_segment_end_m(self) -> float:
+        """距当前折线段终点还有多少米。多车道时 = 距下一次**折返/换道**还有多远。
+
+        判据 D(折返丢窗)要用它:折返瞬间窗口整体转向,原本在 Leader 身后的目标
+        会一拍之内变成"在身前",直接出局 —— 那不是从后沿滑出去的,判据 C 感知不到。
+        """
+        return max(0.0, self._seg_len() - self._seg_progress_m)
+
+    @property
+    def has_next_segment(self) -> bool:
+        """后面还有段可走(即这次到段尾是**折返**, 不是任务结束)。"""
+        return self._seg < len(self.path) - 2
 
     def step(self, dt_s: float, *, hold: bool = False) -> None:
-        """推进一拍。`hold=True` 时原地停船:不前进、不计路程,只累计停船时长。"""
+        """推进一拍。`hold=True` 时原地停船:不前进、不计路程,只累计停船时长。
+
+        一拍内可能走完当前段并接着走下一段(车道很短、dt 较大时);用 while 而不是
+        单次 min() 裁剪,否则换道瞬间会白白损失这一拍剩下的行程。
+        """
         if self.finished:
             return
         if hold:
             self.hold_time_s += float(dt_s)
             return
-        adv = min(self.cfg.leader_speed_mps * dt_s, self.track_end - self.north)
-        self.north += adv
-        self.distance_m += adv
+        remaining = self.cfg.leader_speed_mps * dt_s
+        while remaining > 1e-12 and not self.finished:
+            seg_remaining = self._seg_len() - self._seg_progress_m
+            adv = min(remaining, seg_remaining)
+            self._seg_progress_m += adv
+            self.distance_m += adv
+            remaining -= adv
+            if self._seg_progress_m >= self._seg_len() - 1e-9 and self._seg < len(self.path) - 2:
+                self._seg += 1
+                self._seg_progress_m = 0.0
 
     def window(self, window_cfg) -> WindowRegion:
         """当前观测窗口。用 msim 的 `get_window` —— 它的语义就是"窗口在 Leader 正后方",
-        即前边界与 Leader 位置重合(规格 §3)。"""
+        即前边界与 Leader 位置重合(规格 §3);换道横移时窗口随瞬时航向 psi 转向,
+        是 `get_window`/`_local_coords` 既有的旋转语义(msim 已验收实现),不是本类特例。"""
         return get_window(self.pose, window_cfg)
 
 

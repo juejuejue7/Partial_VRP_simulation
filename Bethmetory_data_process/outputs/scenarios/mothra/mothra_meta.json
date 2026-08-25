@@ -1,6 +1,12 @@
 {
+  "scenario": {
+    "id": "mothra",
+    "label": "Mothra",
+    "kind": "named_field",
+    "provenance": "01_crop_reproject.py 冻结生产值(人工定框); 与 Vent Field Name=='Mothra' 的 28 点零错配"
+  },
   "source": {
-    "path": "Bethy_data/EndeavourAUVSouthCentral1.asc",
+    "path": "Bethmetory_data_process/Bethy_data/EndeavourAUVSouthCentral1.asc",
     "driver": "AAIGrid",
     "dtype": "float32",
     "shape": [
@@ -96,12 +102,17 @@
   },
   "outputs": [
     "endeavour_context.npz",
+    "mothra_bundle.npz",
     "mothra_meta.json",
     "mothra_utm9n_1m.asc",
     "mothra_utm9n_1m.asc.aux.xml",
     "mothra_utm9n_1m.npz",
     "mothra_utm9n_1m.prj",
     "mothra_utm9n_1m.tif",
+    "mothra_vents.csv",
+    "mothra_vents.geojson",
+    "mothra_waypoints.csv",
+    "mothra_waypoints_meta.json",
     "mothra_wgs84.asc",
     "mothra_wgs84.asc.aux.xml",
     "mothra_wgs84.prj",
@@ -109,7 +120,7 @@
   ],
   "vents": {
     "source": "Bethy_data/TABLE_SI.xlsx (Supplemental Table S1)",
-    "selection": "经纬度落在 crop_wgs84.bounds_lon_lat 内",
+    "selection": "经纬度落在 crop_wgs84.bounds_lon_lat 内(几何口径, 非标签口径)",
     "cross_check": "与表中 Vent Field Name == 'Mothra' 完全一致",
     "n_total_in_table": 572,
     "n_selected": 28,

@@ -10,13 +10,13 @@ This information is not intended for navigation purposes.
 
 *****************************DATA SETS IN DOWNLOAD******************************
 
-DATA SET URL: https://www.marine-geo.org/tools/datasets/21402
+DATA SET URL: https://www.marine-geo.org/tools/datasets/21403
 
 >>>> DATA SET DESCRIPTION <<<<
-    This data set was acquired with a Simrad SM2000 Multibeam Sonar system, Reson SeaBat 7125 Multibeam Sonar system, and Kongsberg EM300 Multibeam Sonar system assembled as part of a data synthesis effort (Investigator(s): Dr. Deborah Kelley, Dr. John Delaney, Dr. Dana Yoerger, Dr. David Caress, Dr. David Clague, and Alden Denny). These data files are of GeoTIFF (Raster) format and include Bathymetry data and were processed after data collection. Funding was provided by NSF grant(s): OCE10-43403. This data was cited by Clague et al., 2014.
+    This data set was acquired with a Simrad SM2000 Multibeam Sonar system, Kongsberg EM300 Multibeam Sonar system, and Reson SeaBat 7125 Multibeam Sonar system assembled as part of the JdF:Endeavour_Bathymetry data compilation (Chief Scientist: Dr. Deborah Kelley; Investigator(s): Dr. Deborah Kelley, Dr. John Delaney, Dr. Dana Yoerger, Dr. David Caress, Dr. David Clague, and Dr. Alden Denny). These data files are of NetCDF Grid format and include gridded Bathymetry data and were processed after data collection. Funding was provided by NSF grant(s): OCE10-43403. This data was cited by Clague et al., 2014.
 
 >>>> DATA SET DETAILS <<<<
-    This dataset includes Geotiff formatted gridded bathymetric compilations
+    This dataset includes NetCDF:GMT formatted gridded bathymetric compilations
     derived from multibeam sonar collected by ABE (AUV), the D. Allan B. (AUV),
     and the Thomas G. Thompson (Ship). Filenames containing 'AUV' include MBARI
     AUV data collected with SeaBat 7125 from 2008, 'ABE' include ABE data
@@ -47,9 +47,10 @@ DATA SET URL: https://www.marine-geo.org/tools/datasets/21402
     shown below:
 
     Kelley, D.; Delaney, J.; Yoerger, D.; Caress, D.; Clague, D. and A. Denny,
-    (2015). Processed Bathymetry Grid Compilation (GEOTIFF format) derived from
-    ship and AUV-based Multibeam Sonar Data acquired along the Juan de Fuca
-    Endeavour Spreading Center Segment . MGDS. doi:10.1594/IEDA/321402
+    (2015). Processed Bathymetry Grids (NetCDF:GMT format) derived from
+    Multibeam Sonar Data from the Juan de Fuca - Endeavour Spreading Center
+    Segment assembled as part of the JdF:Endeavour_Bathymetry Data Compilation.
+    MGDS. doi:10.1594/IEDA/321403
 >>>> DATA SET INVESTIGATORS <<<<
     The following investigators are associated with this data set in the
     sequence provided.

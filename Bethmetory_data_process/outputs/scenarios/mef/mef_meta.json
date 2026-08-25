@@ -1,0 +1,138 @@
+{
+  "scenario": {
+    "id": "mef",
+    "label": "MEF",
+    "kind": "named_field",
+    "provenance": "00_find_scenarios.py 命名场规则: Vent Field Name=='MEF' 点集外包 + 30 m 缓冲"
+  },
+  "source": {
+    "path": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoCentral1mArc.grd",
+    "driver": "netCDF",
+    "dtype": "float32",
+    "shape": [
+      2913,
+      6349
+    ],
+    "crs_embedded": null,
+    "crs_assigned": "EPSG:4326",
+    "nodata": NaN,
+    "cellsize_deg": 1.3388508184344169e-05,
+    "bounds": [
+      -129.1410066942541,
+      47.934993305745905,
+      -129.05600305579168,
+      47.97399403008691
+    ]
+  },
+  "crop_wgs84": {
+    "shape": [
+      407,
+      296
+    ],
+    "n_cells": 120472,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2215.2734375,
+    "z_max": -2138.616455078125,
+    "z_mean": -2192.7558995652257,
+    "z_std": 14.569465660539047,
+    "relief_m": 76.656982421875,
+    "crs": "EPSG:4326",
+    "bounds_lon_lat": [
+      -129.1001181902591,
+      47.9457710548343,
+      -129.09615519183654,
+      47.951220177665334
+    ],
+    "cellsize_deg": 1.3388508184344169e-05,
+    "requested_bbox": {
+      "lon_min": -129.10010563505435,
+      "lon_max": -129.09615697494564,
+      "lat_min": 47.9457800109651,
+      "lat_max": 47.9512178479349
+    }
+  },
+  "utm9n_1m": {
+    "shape": [
+      607,
+      298
+    ],
+    "n_cells": 180886,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2215.3198161745327,
+    "z_max": -2138.00448435783,
+    "z_mean": -2192.6356198639896,
+    "z_std": 14.755026137198413,
+    "relief_m": 77.31533181670284,
+    "crs": "EPSG:32609",
+    "resolution_m": [
+      1.0,
+      1.0
+    ],
+    "bounds_utm": [
+      492523.0,
+      5310277.0,
+      492821.0,
+      5310884.0
+    ],
+    "resampling": "bilinear",
+    "transform": [
+      492523.0,
+      1.0,
+      0.0,
+      5310884.0,
+      0.0,
+      -1.0
+    ]
+  },
+  "outputs": [
+    "mef_bundle.npz",
+    "mef_meta.json",
+    "mef_utm9n_1m.asc",
+    "mef_utm9n_1m.asc.aux.xml",
+    "mef_utm9n_1m.npz",
+    "mef_utm9n_1m.prj",
+    "mef_utm9n_1m.tif",
+    "mef_vents.csv",
+    "mef_vents.geojson",
+    "mef_wgs84.asc",
+    "mef_wgs84.asc.aux.xml",
+    "mef_wgs84.prj",
+    "mef_wgs84.tif"
+  ],
+  "vents": {
+    "source": "Bethy_data/TABLE_SI.xlsx (Supplemental Table S1)",
+    "selection": "经纬度落在 crop_wgs84.bounds_lon_lat 内(几何口径, 非标签口径)",
+    "cross_check": "与表中 Vent Field Name == 'MEF' 完全一致",
+    "n_total_in_table": 572,
+    "n_selected": 56,
+    "by_morphology": {
+      "chimney": 47,
+      "mound": 9
+    },
+    "height_m_range": [
+      3,
+      24
+    ],
+    "named": [
+      "Bastille",
+      "Crypto",
+      "Dante",
+      "Dudley",
+      "Grotto",
+      "Grotto N. Tower",
+      "Hulk",
+      "Lobo",
+      "Milli-Q",
+      "Needle",
+      "Peanut",
+      "S&M",
+      "Salut",
+      "Sully",
+      "TP",
+      "Tara"
+    ],
+    "note": "height_m = 烟囱高出海底的高度(表中给定); seafloor_depth_m = 本项目栅格在该点的海底水深(负向下), 两者含义不同"
+  }
+}

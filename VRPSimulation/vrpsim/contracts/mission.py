@@ -98,9 +98,11 @@ MSG_NAMES = {MSG_POLL_REQ: "poll_req", MSG_POLL_REP: "poll_rep",
 HOLD_NONE: int = 0
 HOLD_LAGGING: int = 1      # 判据 A:某台 Follower 的推算位置已落到窗口后沿之后
 HOLD_ENDANGERED: int = 2   # 判据 C:窗口里还有没被分配的目标,再走就要掉出后沿
+HOLD_TURNAROUND: int = 4   # 判据 D:车道折返在即,窗口里还有没被分配的目标
 
 HOLD_NAMES = {HOLD_NONE: "-", HOLD_LAGGING: "lagging",
-              HOLD_ENDANGERED: "endangered", HOLD_LAGGING | HOLD_ENDANGERED: "both"}
+              HOLD_ENDANGERED: "endangered", HOLD_LAGGING | HOLD_ENDANGERED: "both",
+              HOLD_TURNAROUND: "turnaround"}
 
 
 @dataclass(frozen=True)
@@ -118,15 +120,44 @@ class MissionConfig:
     window_look_back_m: float = 100.0    # 沿测线(North)长度
     window_width_m: float = 100.0        # 横向(East)宽度
 
+    # --- 投影点去冲突(2026-08-24 人工裁决) -----------------------------
+    # 窗口里没有可派的目标时,每台 Follower 会收到一个"回到窗口前边界"的投影点。
+    # 投影点**不占用**,min-max VRP 的互斥保证只覆盖真实目标、管不到它们 ⇒ 逐台
+    # 独立投影会把两台送到同一个点。sparse_2 实测:314 个双投影轮里 110 轮两点
+    # 完全重合(间距 <0.01 m),两台实际最近逼到 0.70 m。
+    # 该值是投影点之间在窗口前边界上的**最小横向间隔**,由 `planner` 在生成投影点
+    # 时保序推开来保证(见 `project_to_window_front_multi`)。
+    #
+    # ⚠ **作用域仅限投影点**,不是全队的安全间距保证。真实目标的分配走
+    #   `solve_minmax_vrp_from`,那里没有任何间距约束 —— 它只保证互斥(同一目标不
+    #   派给两台),两台同时持有的目标可以任意近。实测(greedy)取 20 m 时投影点间距
+    #   恒 = 20.000 m(约束是紧的),而同时持有的真实目标最小间距是 5.1~7.5 m 的自由
+    #   值,与本参数无关。字段名点明 projection,免得被读成全队保证。
+    #
+    # 取值 20 m(2026-08-24 人工裁决):按 contracts/metrics.py 的**效率族 + 均衡族**
+    # 实测选定,不是按 ">2 m 安全间距" 这类单点判据。实测(solver=greedy):
+    #   场景      间隔  時間効率(厳密)  単位目標時間  距離不均衡  時間不均衡  艦隊総航程
+    #   mothra     2 m      0.872        54.0 s       6.62%      5.89%     1661 m
+    #   mothra    20 m      0.909        51.8 s       4.37%      0.85%     1607 m  <- 最优
+    #   mothra    50 m      0.887        53.0 s       6.20%      3.98%     1607 m
+    #   sparse_2   2 m      0.963       250.0 s       1.62%      0.68%    16551 m
+    #   sparse_2  20 m      0.977       246.4 s       0.70%      0.77%    16419 m
+    #   sparse_2  50 m      0.991       242.8 s       0.40%      0.06%    16401 m  <- 最优
+    # 50 m 在稀疏场(sparse_2)全面最优,但在密集场(mothra)反而退化 —— 强行摊开让两台
+    # 跑冤枉路;且 50 m 会让 mothra 在**关掉等待机制**时也达成 100% 覆盖(其余档
+    # 95.5%),推翻 D16 的支撑证据。20 m 两个场景都靠前且不触发该问题,取之。
+    projection_min_separation_m: float = 20.0
+
     # --- 运动学 ---------------------------------------------------------
     # 两者同取 0.5 m/s(2026-08-13 人工裁决,D16)。
     #
-    # ⚠ 这个组合在**匀速 Leader** 下是不可行的,实测:全局 min-max VRP 最长单机路线
-    #   452 m / 18 个点 ⇒ 452/0.5 + 18x10 = 1084 s,而 Leader 以 0.5 m/s 走完 500 m
-    #   只要 1000 s。窗口会先冻结,南边的点永久错过。
+    # ⚠ 这个组合在**匀速 Leader** 下是不可行的,实测(Mothra + greedy,2026-08-25 刷新):
+    #   全局 min-max VRP 最长单机路线 467.5 m / 10 个点
+    #   ⇒ 467.5/0.5 + 10x10 = 1035 s,而 Leader 以 0.5 m/s 走完 500 m 只要 1000 s。
+    #   窗口会先冻结,南边的点永久错过。
     #   D16 的 **Leader 等待策略**正是为此:Leader 用自己的 DR 推算发现队友跟不上时
     #   原地停,`t_leader_finish` 从输入变成结果 ——「覆盖率约束」被换成了「时间约束」,
-    #   任务时间下界 = max(测线长/v_leader, t_route_lb) = 1084 s。
+    #   任务时间下界 = max(测线长/v_leader, t_route_lb) = 1035 s。
     #   `feasibility_estimate()` 会对任意参数组合重算这两个量。
     leader_speed_mps: float = 0.5
     follower_speed_mps: float = 0.5
@@ -175,7 +206,16 @@ class MissionConfig:
     #   管的是"活会不会丢"。覆盖率掉下去的直接原因正是这个:窗口滑过去了,
     #   某些点从没进过任何一次规划的池 ⇒ 再也没人会去。
     leader_wait_on_endangered_target: bool = True
-    # 判据 C 的提前量。None → 取 `plan_period_s`:留出整整一个规划周期,
+    # 判据 D —— **车道折返在即**,窗口里还有尚未被分配的目标(2026-08-25 人工裁决)。
+    #   多车道 boustrophedon 特有的失效形态:折返瞬间窗口整体转向 180°,原本在
+    #   Leader 身后的目标一拍之内变成"在身前",`s` 由正跳负、直接出局 —— 它**不是**
+    #   从后沿滑出去的,判据 C 的"再走 lookahead 会不会越过后沿"完全感知不到。
+    #   实测 dense_1 的 wp57:t=1784.0 时 s=+67.4 m 稳在窗内,下一拍 s=-32.3 m 出局,
+    #   此前它被下发过 9 次、进池 18 轮,始终排在队列尾部没轮到队首。
+    #   ⚠ 只在**后面还有段可走**时生效:最后一条车道走完是任务结束,那由强插末轮
+    #     (D15)与终止条件负责,不该在这里把 Leader 永远钉住。
+    leader_wait_on_turnaround: bool = True
+    # 判据 C/D 的提前量。None → 取 `plan_period_s`:留出整整一个规划周期,
     # 保证濒危的点至少还能被规划到一次。规划周期拉长时它自动跟着变。
     leader_wait_lookahead_s: Optional[float] = None
     # 判据 A 的迟滞裕度:落后者要重新进到后沿以北这么多米,Leader 才恢复前进。
@@ -200,10 +240,53 @@ class MissionConfig:
     nav_drift_frac_of_distance: float = 0.0
     seed: int = 0                        # 漂移方向的随机种子,保证可复现
 
-    # --- 求解器 ---------------------------------------------------------
-    vrp_time_limit_s: float = 1.0
+    # --- 求解器(口径见 D21;两个 VRP 方法共用本节全部字段) ---------------
+    #
+    # D21 求解器口径(2026-08-25 人工裁决,证据见 tests/test_planner_exact.py 头注)
+    # ------------------------------------------------------------------
+    # `solver="exact"` 时按**问题规模**分流,不是两个方法各用各的求解器:
+    #
+    #     2 台车 且 1 <= 池大小 <= vrp_exact_max_targets
+    #         → Held-Karp 精确解:全局最优 + 构造性确定(同输入必同输出)
+    #     其余(机数 != 2,或池大小超阈值)
+    #         → ortools,预算 vrp_time_limit_s,GLS 惩罚系数 vrp_gls_lambda
+    #
+    # 分流结果如实写进 `Assignment.solver` / `PlanRound.solver`,事后可审计
+    # 每一轮到底用的哪个求解器 —— 不静默混用。
+    #
+    # 为什么分流而不是一律 ortools:`vrp_span_coefficient=1000` 把目标函数放大
+    # 约三个数量级(由 max路程 主导),而 ortools 的 GLS 惩罚加在**弧代价**上,
+    # 量级差 1e4 ⇒ 惩罚永远改变不了邻域排序 ⇒ GLS 退化成普通贪心下降(实测其解
+    # 与 GREEDY_DESCENT 逐位相同),几毫秒撞到局部最优后剩余预算纯空转。
+    # dense_1 169 轮实测:8.3% 的轮次非最优,最差 +43.5%,且**加时间无效**
+    # (k=11 某轮给到 30 s 仍 +38.9%)。小规模问题直接精确求解才是对症的。
+    #
+    # 为什么分流而不是一律精确:精确解是 O(2^k·k²),k 每 +1 耗时约 ×2.15。
+    #
+    # 兜底的 ortools 保持独立可选(`solver="ortools"`),供消融对照。
+    #
+    # vrp_time_limit_s:单次 ortools 求解的**挂钟**预算。
+    #   ⚠ 只对 ortools 有意义;精确解的耗时是 k 的确定函数,与本字段无关。
+    #   ⚠ GLS 是跑满预算才停的元启发式 —— "实测耗时吃满预算"是它的正常行为,
+    #     **不是**收敛不足的证据,别拿它当难度指标。
+    #   取 30 s 的依据(2026-08-25 人工裁决):二段式全局VRP(n=46..66)在 1 s 下
+    #   远未收敛,最长单机航程比 10 s 的解虚高 13~34%(mef 1405→928 m,
+    #   sparse_2 1496→1323 m,dense_2 1219→959 m);10 s 已基本收敛,30 s 再留余量。
+    #   相对几千秒的任务时长,这点挂钟开销可忽略。
+    #   ⚠ 局部VRP 侧几乎用不到它 —— 七个场景 775 次求解,池大小上限 13,
+    #     全部走精确解;它只在池顶破阈值时才生效。
+    vrp_time_limit_s: float = 30.0
+    vrp_exact_max_targets: int = 13      # 精确解的池上限(见下表)
+    vrp_gls_lambda: float = 100.0        # ortools GLS 惩罚系数(默认 0.1 太小,见上)
     vrp_span_coefficient: int = 1000     # min-max 强度,同 msim ortools_vrp
-    solver: str = "ortools"              # "ortools" | "greedy"(无 ortools 时的确定性退化)
+    solver: str = "exact"                # "exact" | "ortools" | "greedy"
+    #
+    # vrp_exact_max_targets 取 13 的依据(2026-08-25 人工裁决):
+    #   (a) 覆盖率:七个场景 775 次局部VRP 求解,池大小上限恰为 13,无一超过;
+    #   (b) 耗时:实测 k=12 → 171 ms, 13 → 378 ms, 14 → 800 ms, 15 → 1.64 s,
+    #       16 → 3.49 s, 17 → 7.51 s。阈值处最坏 378 ms,相对 15 s 的规划周期
+    #       有 40 倍余量,机载算力上站得住。
+    #   调大阈值请连同这两条依据一起更新,别只改数字。
 
     # --- 仿真时钟 -------------------------------------------------------
     dt_s: float = 0.5
@@ -264,7 +347,8 @@ class MissionConfig:
     @property
     def leader_waits(self) -> bool:
         return bool(self.leader_wait_on_lagging_follower
-                    or self.leader_wait_on_endangered_target)
+                    or self.leader_wait_on_endangered_target
+                    or self.leader_wait_on_turnaround)
 
 
 @dataclass(frozen=True)

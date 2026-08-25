@@ -9,9 +9,15 @@
 全部复用同一份 `MissionConfig`,不新写任何运动学 —— Leader / Follower 直接用
 `agents.py`,VRP 直接用 `planner.solve_minmax_vrp_from`。
 
-⚠ 阶段1 走完时全部目标必然已被探明:观测窗口宽 100 m == 场地 East 跨度,
-  目标 North 最大 442.1 < 测线终点 500 ⇒ 每个目标都进过窗口。
-  这不是假设,是 `test_survey_phase_detects_every_target` 钉住的事实。
+⚠ 阶段1 走完时全部目标必然已被探明 —— 但这个结论**依赖场地被测线完整覆盖**。
+  Mothra:观测窗口宽 100 m == 场地 East 跨度 100 m(单车道),目标 North 最大
+  442.1 < 测线终点 500 ⇒ 每个目标都进过窗口。
+  多场景(2026-08-25):East 跨度 > 声呐幅宽时 Leader 走多车道 boustrophedon,
+  覆盖到「最后车道 + 幅宽/2」。**若 East 跨度超出这个值,东侧会留下永远扫不到的带**,
+  阶段1 结束时那里的目标根本没被探明 —— 这不是二段式的缺陷,是 Leader 路径生成的
+  几何前提。`Bethmetory_data_process/scenarios.json` 里 high_rise / dense_1 已按此
+  裁切到 200 m(= 2 条车道的完整覆盖范围),使全部场景满足该前提。
+  Mothra 这一条不是假设,是 `test_survey_phase_detects_every_target` 钉住的事实。
 """
 from __future__ import annotations
 
@@ -25,9 +31,11 @@ import numpy as np
 from msim.contracts.types import FLOAT
 
 from .agents import Follower, Leader, QueueItem
-from .contracts.mission import STATUS_DWELL, STATUS_IDLE, STATUS_TRANSIT
+from .contracts.mission import (STATUS_DWELL, STATUS_IDLE, STATUS_NAMES,
+                                STATUS_TRANSIT)
 from .contracts.twophase import TwoPhaseConfig
 from .planner import solve_minmax_vrp_from
+from .windows import leader_track
 from .world import MothraWorld, build_mothra_world
 
 __all__ = ["TwoPhaseResult", "run_twophase", "save_twophase_result",
@@ -53,6 +61,11 @@ class TwoPhaseResult:
     routes: List[List[int]]              # 阶段2 全局 VRP 的解(每台一条,targets 下标)
     t_survey_s: float                    # 阶段1 结束时刻 = Leader 走完测线
     n_vrp_solves: int                    # 全程解了几次 VRP —— 二段式必须恰为 1
+    # Leader 沿测线折线走过的**实际路程**。多车道(boustrophedon)起不能再用
+    # `leader_north_m[-1]` 当航程 —— 那是最终 North 坐标, 只在"单条北行测线"时
+    # 与路程相等; 偶数条车道结束在南端时它是 0, 会把 Leader 的整条测线白送掉,
+    # 令 `fleet_distance_m` 系统性偏小(2026-08-25 修)。
+    leader_distance_total_m: float = 0.0
     meta: Dict[str, Any] = field(default_factory=dict)
 
     # --- 与另外两个场景平行的口径 ----------------------------------------
@@ -162,8 +175,8 @@ class TwoPhaseResult:
             "per_vehicle_visits": [int(x) for x in self.per_vehicle_visits],
             "max_distance_m": float(d.max()) if d.size else 0.0,
             "total_distance_m": float(d.sum()),
-            "leader_distance_m": float(self.leader_north_m[-1]),
-            "fleet_distance_m": float(self.leader_north_m[-1]) + float(d.sum()),
+            "leader_distance_m": float(self.leader_distance_total_m),
+            "fleet_distance_m": float(self.leader_distance_total_m) + float(d.sum()),
             "shadow_error_max_m": 0.0,   # 没有影子模型(不需要:全局路线离线算好)
             "timed_out": bool(self.meta.get("timed_out", False)),
             # --- ④ 通信コスト:**真的是 0,不是"不适用"** --------------------
@@ -209,7 +222,10 @@ def run_twophase(cfg: Optional[TwoPhaseConfig] = None,
     dt = cfg.dt_s
     base = cfg.base
 
-    leader = Leader(base, track_end_north_m=mw.world.x_max_m)
+    # 车道间距 = 声呐幅宽(base.window_width_m),与 mission.py::run_mission 同一惯例。
+    # Mothra(East 100m == 幅宽 100m)退化为单车道直线, 与改动前逐位相同。
+    path = leader_track(mw.world, base.window_width_m)
+    leader = Leader(base, path=path)
     vehicles = [Follower(i, s, cfg.vehicle_cfg)
                 for i, s in enumerate(cfg.vehicle_starts_ned)]
 
@@ -219,16 +235,25 @@ def run_twophase(cfg: Optional[TwoPhaseConfig] = None,
     # 结果逐位相同;`n_vrp_solves` 会把"只解一次"这件事记下来供测试断言。
     starts = [np.asarray(s, dtype=FLOAT).reshape(2) for s in cfg.vehicle_starts_ned]
     _t0 = time.perf_counter()
+    # ⚠ n = 全体目标(46~66),远超 `vrp_exact_max_targets` ⇒ 这里**必然**走 ortools。
+    #   分流参数照传不误:口径由 `solve_minmax_vrp_from` 一处决定,不在调用方分支。
     routes, solver_used = solve_minmax_vrp_from(
         starts, list(ds.targets_ned),
         time_limit_s=cfg.vrp_time_limit_s,
         span_coefficient=base.vrp_span_coefficient,
+        exact_max_targets=base.vrp_exact_max_targets,
+        gls_lambda=base.vrp_gls_lambda,
         solver=cfg.solver)
     # ⚠ 挂钟量,宿主机相关,**不进入仿真时间轴**(与 D15 对 solve_wall_s 的定性一致)
     solve_wall_s = time.perf_counter() - _t0
     n_vrp_solves = 1
 
-    t_survey = mw.world.x_max_m / cfg.leader_speed_mps
+    # 阶段1 时长 = Leader 走完**整条折线**的时刻。多车道(boustrophedon)起不能再用
+    # `x_max_m / v`(那只是单条车道的 North 跨度):sparse_2 的 7 车道折线总长 5535 m,
+    # 单车道公式会算成 705 m,阶段切换与终止判据都会跟着错。这里按折线总长解析算,
+    # 与 `leader.finished` 的实际触发时刻一致(Leader 在阶段1 全程匀速、不停船)。
+    t_survey = float(sum(np.linalg.norm(path[i + 1] - path[i])
+                         for i in range(len(path) - 1))) / cfg.leader_speed_mps
 
     visit_time = np.full(n_t, np.nan, dtype=FLOAT)
     visit_by = np.full(n_t, -1, dtype=np.int32)
@@ -305,6 +330,7 @@ def run_twophase(cfg: Optional[TwoPhaseConfig] = None,
         routes=[[int(j) for j in r] for r in routes],
         t_survey_s=float(t_survey),
         n_vrp_solves=n_vrp_solves,
+        leader_distance_total_m=float(leader.distance_m),
         meta={"dt_s": dt, "solver": solver_used, "timed_out": timed_out,
               "solve_wall_s": float(solve_wall_s),
               "survey_line_length_m": float(mw.world.x_max_m),
@@ -320,7 +346,8 @@ def run_twophase(cfg: Optional[TwoPhaseConfig] = None,
 # ======================================================================
 # 落盘 / 回读
 # ======================================================================
-def save_twophase_result(res: TwoPhaseResult, npz_path: str) -> None:
+def save_twophase_result(res: TwoPhaseResult, npz_path: str,
+                         *, also_csv: bool = True) -> None:
     os.makedirs(os.path.dirname(os.path.abspath(npz_path)), exist_ok=True)
     np.savez(npz_path,
              t_s=res.t_s, leader_north_m=res.leader_north_m,
@@ -336,6 +363,37 @@ def save_twophase_result(res: TwoPhaseResult, npz_path: str) -> None:
                    "t_survey_s": res.t_survey_s,
                    "t_observe_s": res.t_observe_s}, f,
                   ensure_ascii=False, indent=2)
+    if also_csv:
+        _write_twophase_timeline_csv(res, base + "_timeline.csv")
+
+
+def _write_twophase_timeline_csv(res: TwoPhaseResult, path: str) -> None:
+    """逐时刻一行的宽表 —— 与 `mission._write_timeline_csv` /
+    `lawnmower` 的时间线同口径, 便于三方法逐拍对照分析。
+
+    ⚠ 列名沿用各方法自己的语义:二段式的执行机是 `vehicle`(阶段2 才动),
+      不是提案里的 `follower`;`leader_north_m` 在阶段1 推进、阶段2 恒定。
+      没有 `win_*` 列 —— 二段式不用滑动窗口(全局目标表在阶段2 一次解完)。
+    """
+    import csv
+
+    n_v = res.vehicle_pos.shape[1]
+    cols = ["t_s", "leader_north_m", "phase", "visited_count"]
+    for i in range(n_v):
+        cols += [f"v{i}_north_m", f"v{i}_east_m", f"v{i}_status", f"v{i}_dist_m"]
+    with open(path, "w", newline="", encoding="utf-8-sig") as fh:
+        w = csv.writer(fh)
+        w.writerow(cols)
+        for k in range(len(res.t_s)):
+            phase = 1 if res.t_s[k] < res.t_survey_s - 1e-9 else 2
+            row = [f"{res.t_s[k]:.2f}", f"{res.leader_north_m[k]:.3f}",
+                   phase, int(res.visited_count[k])]
+            for i in range(n_v):
+                row += [f"{res.vehicle_pos[k, i, 0]:.3f}",
+                        f"{res.vehicle_pos[k, i, 1]:.3f}",
+                        STATUS_NAMES[int(res.vehicle_status[k, i])],
+                        f"{res.vehicle_distance_m[k, i]:.2f}"]
+            w.writerow(row)
 
 
 def load_twophase_result(npz_path: str) -> Dict[str, Any]:

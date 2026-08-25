@@ -414,21 +414,44 @@ def sweep_times(mw: MothraWorld, timeline: Mapping[str, Any]) -> np.ndarray:
     揭示是**累积**的:窗口滑过去之后目标仍算已揭示,故下游用 `swept <= t` 判定,
     而不是"此刻是否在窗口内"。
 
+    判定公式与仿真主循环用来过滤 VRP 目标池的
+    `msim.geometry.window._local_coords` / `window_contains_world` **逐式相同**
+    (这里按 (T,J) 向量化,避免出图脚本另撑一套可能悄悄跑偏的几何):
+    `s = d·back, t = d·lat, back=(-cosψ,-sinψ), lat=(-sinψ,cosψ)`,
+    `inside ⟺ 0<=s<=look_back_m 且 |t|<=width_m/2`。
+
+    Leader 的 East/航向按 `timeline["leader_east_m"/"leader_psi"]` 逐拍取 ——
+    多车道(boustrophedon)起两者都不是常量;旧存档没有这两列时退回"单车道、
+    East 恒为场地中线"的旧近似(仅影响用旧 npz 重出图,数值不变)。
+
     纯粹从已有记录推导,不需要重跑任务(04)。
     """
-    tg = np.asarray(mw.dataset.targets_ned, dtype=np.float64)
-    t_s = np.asarray(timeline["t_s"], dtype=np.float64)
-    win_n = np.asarray(timeline["window_north"], dtype=np.float64)   # (T,2) [后沿,前沿]
+    tg = np.asarray(mw.dataset.targets_ned, dtype=np.float64)         # (J,2)
+    t_s = np.asarray(timeline["t_s"], dtype=np.float64)               # (T,)
+    win_n = np.asarray(timeline["window_north"], dtype=np.float64)    # (T,2) [后沿,前沿]
+    win_meta = timeline.get("meta", {}).get("window", {})
+    width = float(win_meta.get("width_m", mw.world.y_max_m))
+    # 直接读契约值,不要从 window_north 的首拍差反推——Leader 起点在场地边界上时
+    # 窗口后沿会被截断到 0(`back_north = max(0, north - look_back_m)`),首拍差
+    # 会是 0,不是真正的 look_back_m。
+    look_back = float(win_meta.get("look_back_m", width))
 
-    width = float(timeline.get("meta", {}).get("window", {}).get("width_m",
-                                                                 mw.world.y_max_m))
-    east_c = mw.world.y_max_m / 2.0                 # 单条测线在 East 中线
-    in_east = np.abs(tg[:, 1] - east_c) <= width / 2.0 + 1e-9       # (J,)
-
-    # (T,J):每拍每个目标是否落在窗口的 North 区间内
-    in_north = ((tg[None, :, 0] >= win_n[:, 0:1] - 1e-9)
-                & (tg[None, :, 0] <= win_n[:, 1:2] + 1e-9))
-    inside = in_north & in_east[None, :]
+    if "leader_east_m" in timeline and "leader_psi" in timeline:
+        east = np.asarray(timeline["leader_east_m"], dtype=np.float64)     # (T,)
+        psi = np.asarray(timeline["leader_psi"], dtype=np.float64)         # (T,)
+        north = np.asarray(timeline["leader_north_m"], dtype=np.float64)   # (T,)
+        dN = tg[None, :, 0] - north[:, None]        # (T,J)
+        dE = tg[None, :, 1] - east[:, None]
+        c, s_ = np.cos(psi)[:, None], np.sin(psi)[:, None]
+        s = -(dN * c + dE * s_)                     # d·back, back=(-c,-s)
+        t = -dN * s_ + dE * c                        # d·lat,  lat =(-s, c)
+        inside = (s >= -1e-9) & (s <= look_back + 1e-9) & (np.abs(t) <= width / 2.0 + 1e-9)
+    else:
+        east_c = mw.world.y_max_m / 2.0              # 旧存档兜底:单车道、East 恒定
+        in_east = np.abs(tg[:, 1] - east_c) <= width / 2.0 + 1e-9       # (J,)
+        in_north = ((tg[None, :, 0] >= win_n[:, 0:1] - 1e-9)
+                    & (tg[None, :, 0] <= win_n[:, 1:2] + 1e-9))
+        inside = in_north & in_east[None, :]
 
     out = np.full(tg.shape[0], np.nan, dtype=np.float64)
     ever = inside.any(axis=0)
@@ -470,8 +493,14 @@ def plot_mission_snapshot(ax, mw: MothraWorld, timeline: Mapping[str, Any], t_s:
     k = int(np.clip(k, 0, len(times) - 1))
 
     pos = np.asarray(timeline["follower_pos"], dtype=np.float64)     # (T,F,2)
-    win_n = np.asarray(timeline["window_north"], dtype=np.float64)
-    leader_n = float(np.asarray(timeline["leader_north_m"])[k])
+    leader_north_all = np.asarray(timeline["leader_north_m"], dtype=np.float64)
+    leader_n = float(leader_north_all[k])
+    has_multilane = "leader_east_m" in timeline and "leader_psi" in timeline
+    leader_east_all = (np.asarray(timeline["leader_east_m"], dtype=np.float64)
+                       if has_multilane
+                       else np.full_like(leader_north_all, mw.world.y_max_m / 2.0))
+    leader_e = float(leader_east_all[k])
+    leader_psi_k = float(np.asarray(timeline["leader_psi"])[k]) if has_multilane else 0.0
     visit = np.asarray(timeline["visit_time_s"], dtype=np.float64)
     if swept is None:
         swept = sweep_times(mw, timeline)
@@ -482,21 +511,34 @@ def plot_mission_snapshot(ax, mw: MothraWorld, timeline: Mapping[str, Any], t_s:
     ax.set_xlabel("")
     ax.set_ylabel("")
 
-    east_c = mw.world.y_max_m / 2.0
-    width = float(timeline.get("meta", {}).get("window", {}).get("width_m",
-                                                                 mw.world.y_max_m))
+    win_meta = timeline.get("meta", {}).get("window", {})
+    width = float(win_meta.get("width_m", mw.world.y_max_m))
+    look_back = float(win_meta.get("look_back_m", width))
 
-    # --- Leader 测线 + 当前窗口 + Leader 位置 -------------------------
-    ax.plot([east_c, east_c], [0.0, mw.world.x_max_m], "-", color=st.leader_color,
-            linewidth=st.track_linewidth, alpha=0.85, zorder=3)
-    n0, n1 = float(win_n[k, 0]), float(win_n[k, 1])
+    # --- Leader 已走过的测线(多车道往复;单车道退化为一条竖直线,与旧版
+    #     画法一致)+ 当前窗口 + Leader 位置 -------------------------------
+    ax.plot(leader_east_all[:k + 1], leader_north_all[:k + 1], "-",
+           color=st.leader_color, linewidth=st.track_linewidth, alpha=0.85, zorder=3)
+
+    # 窗口矩形:按 Leader 瞬时航向 psi 用 get_window 同款局部系(s=沿后方, t=横向)
+    # 反算世界坐标下的 4 个角。lawnmower 折线的 psi 恒为基本方向(0/±90/180度),
+    # 故 back/lat 恰好落在世界坐标轴上, 4 角的外接框就是精确窗口, 不是近似。
+    c_, s_ = round(np.cos(leader_psi_k)), round(np.sin(leader_psi_k))
+    back = (-c_, -s_)
+    lat = (-s_, c_)
+    corners = [(leader_n + s * back[0] + t * lat[0], leader_e + s * back[1] + t * lat[1])
+              for s in (0.0, look_back) for t in (-width / 2.0, width / 2.0)]
+    ns = [p[0] for p in corners]
+    es = [p[1] for p in corners]
+    n0, n1 = max(0.0, min(ns)), min(float(mw.world.x_max_m), max(ns))
+    e0, e1 = min(es), max(es)
     if n1 > n0:
         from matplotlib.colors import to_rgb
-        ax.add_patch(Rectangle((east_c - width / 2.0, n0), width, n1 - n0,
+        ax.add_patch(Rectangle((e0, n0), e1 - e0, n1 - n0,
                                facecolor=(*to_rgb(st.leader_color), st.window_face_alpha),
                                edgecolor=st.leader_color, linewidth=st.window_linewidth,
                                linestyle="--", zorder=2))
-    ax.plot([east_c], [leader_n], marker="v", color=st.leader_color,
+    ax.plot([leader_e], [leader_n], marker="v", color=st.leader_color,
             markersize=st.leader_marker_size * auv_scale,
             markeredgecolor=st.marker_edge_color,
             markeredgewidth=st.auv_marker_edge_width, zorder=7)

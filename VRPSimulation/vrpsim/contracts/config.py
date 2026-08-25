@@ -25,8 +25,11 @@ DEFAULT_DATA_DIR: str = os.path.join(SIM_ROOT, "data")
 DEFAULT_FIGURE_DIR: str = os.path.join(SIM_ROOT, "figures")
 
 # 上游水深数据(D3:**不是**环境层,仅 viz 底图可选读取)
+# Bethmetory_data_process 的场景 registry 落地后, Mothra 与其它场景同构地放在
+# outputs/scenarios/<id>/ 下(不再是 outputs/ 根目录), 这里跟着改。
 UPSTREAM_BUNDLE_NPZ: str = os.path.join(
-    REPO_ROOT, "Bethmetory_data_process", "outputs", "mothra_bundle.npz")
+    REPO_ROOT, "Bethmetory_data_process", "outputs", "scenarios", "mothra",
+    "mothra_bundle.npz")
 
 
 @dataclass(frozen=True)

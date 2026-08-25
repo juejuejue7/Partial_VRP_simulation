@@ -1,0 +1,47 @@
+{
+  "scenario_id": "mef",
+  "n_waypoints": 56,
+  "source": "outputs/scenarios/mef/mef_bundle.npz (由 06_extract_vents.py 从 Bethy_data/TABLE_SI.xlsx 提取, 已按 MEF 裁剪 bbox 筛选)",
+  "waypoint_id_note": "1..N 的稳定标签, 沿用源表 sequence_id 顺序; 不代表访问顺序, 路径规划器自行决定次序",
+  "local_frame": {
+    "definition": "原点 = UTM 9N 栅格西南角; x 向东, y 向北, 单位米",
+    "origin_utm9n": [
+      492523.0,
+      5310277.0
+    ],
+    "epsg": 32609,
+    "extent_m": [
+      298.0,
+      607.0
+    ],
+    "grid_shape_rows_cols": [
+      607,
+      298
+    ],
+    "index_from_local": "col = int(x_local_m); row = (nrows-1) - int(y_local_m)",
+    "why": "本区 1 度经度约 74.6 km 而 1 度纬度约 111.2 km (差 1.49 倍); 直接用经纬度做平面距离会把东西向高估约 49%"
+  },
+  "columns": {
+    "height_m": "烟囱/丘体高出海底的高度, 源表给定",
+    "seafloor_depth_m": "UTM 1 m 栅格在该点格子的海底水深, 负向下; 与 height_m 含义不同, 不要相加或混用。溯源用的 WGS84 原生采样值见 mef_vents.csv 同名列, 两者在陡坡处可差约 1.2 m",
+    "type": "chimney / mound"
+  },
+  "type_counts": {
+    "chimney": 47,
+    "mound": 9
+  },
+  "height_m_range": [
+    3.0,
+    24.0
+  ],
+  "local_extent_used_m": {
+    "x": [
+      31.90799999999581,
+      267.2829999999958
+    ],
+    "y": [
+      31.781999999657273,
+      575.6689999997616
+    ]
+  }
+}

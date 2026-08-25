@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """05 — 任务仿真结果出图:时序快照 (a) + North-时间 (b)。
 
-输入 : VRPSimulation/data/mission.npz(由 04 生成)
-       VRPSimulation/data/mothra_world.npz / mothra_basemap.npz
-输出 : VRPSimulation/figures/mission_overview.png
+输入(统一在 VRPSimulation/data/scenarios/<id>/, <id> 含 mothra 本身):
+       mission.npz(由 04 生成)、world.npz / basemap.npz(由 01 生成)
+输出 : VRPSimulation/figures/scenarios/<id>/mission_overview.png
 
 版式(人工规格 2026-08-09):
   上排 = 按固定时间间隔(默认 100 s)的一组快照,展示任务如何推进;
@@ -22,6 +22,7 @@
   --font-scale 1.4              懒人档:所有字号乘 1.4
 
 运行: D:/nixingxing/Anaconda/envs/auv_py310/python.exe VRPSimulation/scripts/05_plot_mission.py
+      D:/nixingxing/Anaconda/envs/auv_py310/python.exe VRPSimulation/scripts/05_plot_mission.py --scenario sparse_2
 """
 from __future__ import annotations
 
@@ -47,14 +48,17 @@ from vrpsim.world import load_world  # noqa: E402
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--mission", default=os.path.join(DEFAULT_DATA_DIR, "mission.npz"))
-    ap.add_argument("--world", default=os.path.join(DEFAULT_DATA_DIR, "mothra_world.npz"))
-    ap.add_argument("--basemap", default=os.path.join(DEFAULT_DATA_DIR, "mothra_basemap.npz"))
+    ap.add_argument("--scenario", default="mothra",
+                    help="Bethmetory_data_process/scenarios.json 里的场景 id "
+                         "(默认 mothra); 决定 --mission/--world/--basemap/--out 的默认路径")
+    ap.add_argument("--mission", default=None)
+    ap.add_argument("--world", default=None)
+    ap.add_argument("--basemap", default=None)
     ap.add_argument("--snapshot-interval", type=float, default=100.0,
                     help="上排快照的时间间隔 [s]")
     ap.add_argument("--no-time-guides", action="store_true",
                     help="不在 (b) 上画各快照时刻的竖直参考线")
-    ap.add_argument("--out", default=os.path.join(DEFAULT_FIGURE_DIR, "mission_overview.png"))
+    ap.add_argument("--out", default=None)
     # ---- 样式 ----
     ap.add_argument("--style", default=None, metavar="JSON",
                     help="样式文件;不传则用 contracts/style.py 的默认样式")
@@ -68,6 +72,13 @@ def main() -> None:
                     help="覆盖图宽 [in](图高由快照的等比例需求自动反推)")
     args = ap.parse_args()
 
+    scen_data_dir = os.path.join(DEFAULT_DATA_DIR, "scenarios", args.scenario)
+    mission_p = args.mission or os.path.join(scen_data_dir, "mission.npz")
+    world_p = args.world or os.path.join(scen_data_dir, "world.npz")
+    basemap_p = args.basemap or os.path.join(scen_data_dir, "basemap.npz")
+    out_p = args.out or os.path.join(DEFAULT_FIGURE_DIR, "scenarios", args.scenario,
+                                     "mission_overview.png")
+
     style = load_style(args.style, font_scale=args.font_scale,
                        dpi=args.dpi, fig_width_in=args.fig_width)
     if args.dump_style:
@@ -75,15 +86,16 @@ def main() -> None:
         print("改完其中的数值后用  --style " + args.dump_style + "  重新出图。")
         return
 
-    for p in (args.mission, args.world):
+    for p in (mission_p, world_p):
         if not os.path.isfile(p):
-            raise SystemExit(f"找不到 {p};先跑 01_build_world.py 与 04_run_mission.py")
+            raise SystemExit(f"找不到 {p};先跑 01_build_world.py 与 04_run_mission.py"
+                             f"(都带 --scenario {args.scenario})")
 
     use_cjk_font(style.font_family)
     style.apply_rcparams()
-    d = load_result(args.mission)
-    mw = load_world(args.world)
-    base = load_basemap(args.basemap)
+    d = load_result(mission_p)
+    mw = load_world(world_p)
+    base = load_basemap(basemap_p)
 
     t = np.asarray(d["t_s"], dtype=float)
     t_end = float(t[-1])
@@ -138,7 +150,8 @@ def main() -> None:
                               style=style)
         # 六帧共用同一套坐标范围,刻度**线**都保留(坐标轴要在),
         # 但刻度**数字**只在最左一帧标一次 —— 每帧都标会互相撞成一片。
-        ax.set_xticks([0, 50, 100])
+        # 三个刻度按该场景自己的 East 跨度均分(Mothra East=100 时退化为 [0,50,100])。
+        ax.set_xticks(np.linspace(0.0, mw.world.y_max_m, 3))
         if i > 0:
             ax.set_xticklabels([])
             ax.set_yticklabels([])
@@ -173,10 +186,10 @@ def main() -> None:
     axb.grid(alpha=style.panel_b_grid_alpha, linewidth=style.panel_b_grid_linewidth)
 
     print("[2/3] 绘制完成(无图例 / 无标题 / 无轴标签)")
-    os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
-    fig.savefig(args.out, dpi=style.dpi, facecolor=style.facecolor)
+    os.makedirs(os.path.dirname(os.path.abspath(out_p)), exist_ok=True)
+    fig.savefig(out_p, dpi=style.dpi, facecolor=style.facecolor)
     plt.close(fig)
-    print(f"[3/3] {args.out}  ({os.path.getsize(args.out) / 1024:.1f} KB)")
+    print(f"[3/3] {out_p}  ({os.path.getsize(out_p) / 1024:.1f} KB)")
 
 
 if __name__ == "__main__":

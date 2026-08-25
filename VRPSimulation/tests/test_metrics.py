@@ -98,6 +98,7 @@ def test_leader_distance_is_independent_of_waiting(mw):
     on = run_mission(MissionConfig(**FAST), mw).summary()
     off = run_mission(MissionConfig(leader_wait_on_lagging_follower=False,
                                     leader_wait_on_endangered_target=False,
+                                    leader_wait_on_turnaround=False,
                                     **FAST), mw).summary()
     assert on["leader_hold_frac"] > 0 and off["leader_hold_frac"] == 0.0
     assert on["leader_distance_m"] == pytest.approx(off["leader_distance_m"])
@@ -190,9 +191,21 @@ def test_time_efficiency_is_bounded_by_one(res, mw):
 # ======================================================================
 @pytest.fixture(scope="module")
 def res_missed(mw):
-    """关掉等待策略 ⇒ Follower 跟不上,必然漏点。这是 D18 那三列指标的用武之地。"""
-    r = run_mission(MissionConfig(leader_wait_on_lagging_follower=False,
+    """关掉等待策略 + Leader 提速 ⇒ Follower 跟不上,大量漏点。
+
+    这就是 `contracts/metrics.py::time_efficiency_obs` 定义里引用的 `waitoff_L1_*`
+    那组(L=1.0 m/s、等待全关),实测 10/22、実測効率 1.019 —— 正是"这一列可以
+    超过 1.0"的现场。
+
+    ⚠ 不要退回 L=0.5:那组只漏 1/22,收工时刻与基准**几乎相等**(2026-08-24 把投影点
+      横向间隔定到 20 m 后实测两者都是 1139.0 s),"漏点组更早收工"这个前提直接不成立,
+      三条陷阱断言全部落空。要钉的是**指标的性质**,就得用一个margin 稳的配置,
+      而不是卡在 1 个目标的刀刃上。
+    """
+    r = run_mission(MissionConfig(leader_speed_mps=1.0,
+                                  leader_wait_on_lagging_follower=False,
                                   leader_wait_on_endangered_target=False,
+                                  leader_wait_on_turnaround=False,
                                   **FAST), mw)
     assert r.coverage < 1.0, "这个 fixture 的前提就是漏点;不漏就没什么好测的了"
     return r
@@ -246,14 +259,19 @@ def test_observed_efficiency_is_flattered_by_missing_targets(res, res_missed, mw
 
 def test_coverage_discount_narrows_the_flattery_but_need_not_reverse_it(
         res, res_missed, mw):
-    """覆盖折扣把漏点带来的虚高**大幅压回去**,但**不保证翻转排序** —— 记录实测事实。
+    """覆盖折扣把漏点带来的虚高**大幅压回去**;是否翻转排序**看漏得多狠**,不保证。
 
-    实测(greedy):waitoff 只漏 1/22 却早收工 60 s,
-        実測効率 0.918 vs 0.872(虚高 +0.046)
-        折扣后   0.876 vs 0.872(仅剩 +0.005,压掉约 10 倍)
-    折扣仍未翻转,因为它是**线性外推**:假设剩下那 1 个目标与已做的一样费时。
-    实际漏掉的是被 Leader 甩到窗口外、只有停船等待才够得着的点,所以这个数偏乐观,
-    是**上界**不是预测(见 contracts/metrics.py 的 time_efficiency_cov 定义)。
+    实测(greedy,`waitoff_L1` 组:L=1.0 + 等待全关,10/22):
+        実測効率 1.019 vs 0.909(虚高 +0.110,**而且超过了 1.0** ——
+                                 拿全任务的下界去除半任务的耗时,荒谬之处一目了然)
+        折扣后   0.463 vs 0.909(不但压没了虚高,还翻转成 -0.446)
+    折扣是**线性外推**:假设没做的目标与已做的一样费时。实际漏掉的是被 Leader 甩出
+    窗口、只有停船等待才够得着的点,所以它偏乐观,是**上界**不是预测
+    (见 contracts/metrics.py 的 time_efficiency_cov 定义)。
+
+    ⚠ 漏得少时折扣**未必**翻转:同样 greedy、L=0.5 只漏 1/22 那组,虚高 +0.046
+      压到 +0.005 仍未翻转。本用例只断言"压小",不断言"翻转" —— 名字里的
+      `need_not_reverse` 就是这个意思。
 
     ⇒ **効率列本身分不出 wait on/off 的高下,能分出的是 `visited`。**
       这正是把「目標総数 / 観測成功数」放进对比表的理由(D18)。

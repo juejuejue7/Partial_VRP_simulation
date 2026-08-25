@@ -3,8 +3,8 @@
 """
 02 — Mothra 热液场地形渲染
 ================================================================================
-输入 : outputs/mothra_utm9n_1m.npz      (653x293, EPSG:32609, 1 m 正方形像元)
-       outputs/endeavour_context.npz    (全测区降采样底图)
+输入 : outputs/scenarios/mothra/mothra_utm9n_1m.npz  (653x293, EPSG:32609, 1 m 正方形像元)
+       outputs/scenarios/mothra/endeavour_context.npz (全测区降采样底图)
 
 输出 (figures/):
        fig01_mothra_relief_light.png    主图: 晕渲地形 + 等深线   <- 展示用
@@ -391,8 +391,8 @@ def main() -> None:
     FIGDIR.mkdir(parents=True, exist_ok=True)
     T = setup_fonts(args.lang)
 
-    d = dict(np.load(OUTDIR / "mothra_utm9n_1m.npz"))
-    c = dict(np.load(OUTDIR / "endeavour_context.npz"))
+    d = dict(np.load(OUTDIR / "scenarios" / "mothra" / "mothra_utm9n_1m.npz"))
+    c = dict(np.load(OUTDIR / "scenarios" / "mothra" / "endeavour_context.npz"))
     print(f"  载入 Mothra {d['z'].shape}, 上下文 {c['z'].shape}")
 
     made: list[Path] = []

@@ -1,0 +1,156 @@
+[
+  {
+    "id": "mothra",
+    "label": "Mothra",
+    "kind": "named_field",
+    "source_tile": "Bethmetory_data_process/Bethy_data/EndeavourAUVSouthCentral1.asc",
+    "tile_name": "SouthCentral",
+    "bbox_wgs84": {
+      "lon_min": -129.10974,
+      "lon_max": -129.10583,
+      "lat_min": 47.92026,
+      "lat_max": 47.92612
+    },
+    "provenance": "01_crop_reproject.py 冻结生产值(人工定框); 与 Vent Field Name=='Mothra' 的 28 点零错配",
+    "expected": {
+      "n_targets": 28,
+      "area_ha": 18.899,
+      "density_per_ha": 1.4816,
+      "ar": 2.2214
+    },
+    "legacy_output_prefix": "mothra",
+    "frozen_at": "2026-08-24"
+  },
+  {
+    "id": "mef",
+    "label": "MEF",
+    "kind": "named_field",
+    "source_tile": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoCentral1mArc.grd",
+    "tile_name": "Central",
+    "bbox_wgs84": {
+      "lon_min": -129.10010563505435,
+      "lon_max": -129.09615697494564,
+      "lat_min": 47.9457800109651,
+      "lat_max": 47.9512178479349
+    },
+    "provenance": "00_find_scenarios.py 命名场规则: Vent Field Name=='MEF' 点集外包 + 30 m 缓冲",
+    "expected": {
+      "n_targets": 56,
+      "area_ha": 17.702,
+      "density_per_ha": 3.1634,
+      "ar": 2.0422
+    },
+    "legacy_output_prefix": null,
+    "frozen_at": "2026-08-24"
+  },
+  {
+    "id": "high_rise",
+    "label": "High Rise",
+    "kind": "named_field",
+    "source_tile": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoCentral1mArc.grd",
+    "tile_name": "Central",
+    "bbox_wgs84": {
+      "lon_min": -129.08977288560754,
+      "lon_max": -129.087117949,
+      "lat_min": 47.9653017760651,
+      "lat_max": 47.9704607721349
+    },
+    "provenance": "00_find_scenarios.py 命名场规则: Vent Field Name=='High Rise' 点集外包 + 30 m 缓冲 ｜2026-08-25 人工裁决: 东侧裁切 lon_max -129.086500071 -> -129.087117949(UTM East 跨度 247 m -> 200 m)。理由: Leader 的 boustrophedon 测线把车道放在 y=幅宽/2+k*幅宽 且 y<=y_max, 声呐只覆盖到「最后车道+幅宽/2」= 200 m; 原 bbox 东侧 (200, 247] 那条带**永远扫不到**, 里面的目标必然漏。 裁到 200 m = 2 条车道的完整覆盖范围, 使场景与局部VRP方法自洽。 原冻结值(2026-08-24)保留在本条以便溯源。",
+    "expected": {
+      "n_targets": 58,
+      "area_ha": 13.915,
+      "density_per_ha": 4.4557,
+      "ar": 2.3384
+    },
+    "legacy_output_prefix": null,
+    "frozen_at": "2026-08-25"
+  },
+  {
+    "id": "sparse_2",
+    "label": "Sparse #2 (off-axis, North)",
+    "kind": "searched",
+    "source_tile": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoNorth1mArc.grd",
+    "tile_name": "North",
+    "bbox_wgs84": {
+      "lon_min": -129.06991610265547,
+      "lon_max": -129.06052766338357,
+      "lat_min": 47.99233734285973,
+      "lat_max": 47.99866817400741
+    },
+    "provenance": "00_find_scenarios.py preset=sparse 滑窗搜索候选 #2(10 m 粗格网, 100% 有效测深, dens 0.25-1.00/ha, area>=10ha)",
+    "expected": {
+      "n_targets": 46,
+      "area_ha": 49.0,
+      "density_per_ha": 0.9388,
+      "ar": 1.0
+    },
+    "legacy_output_prefix": null,
+    "frozen_at": "2026-08-24"
+  },
+  {
+    "id": "sparse_3",
+    "label": "Sparse #3 (off-axis, North)",
+    "kind": "searched",
+    "source_tile": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoNorth1mArc.grd",
+    "tile_name": "North",
+    "bbox_wgs84": {
+      "lon_min": -129.0750126839745,
+      "lon_max": -129.0656242447026,
+      "lat_min": 47.99233734285973,
+      "lat_max": 47.99866817400741
+    },
+    "provenance": "00_find_scenarios.py preset=sparse 滑窗搜索候选 #3",
+    "expected": {
+      "n_targets": 24,
+      "area_ha": 49.0,
+      "density_per_ha": 0.4898,
+      "ar": 1.0
+    },
+    "legacy_output_prefix": null,
+    "frozen_at": "2026-08-24"
+  },
+  {
+    "id": "dense_1",
+    "label": "Dense #1 (MEF core)",
+    "kind": "searched",
+    "source_tile": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoCentral1mArc.grd",
+    "tile_name": "Central",
+    "bbox_wgs84": {
+      "lon_min": -129.0994226260815,
+      "lon_max": -129.096784452,
+      "lat_min": 47.94440390702722,
+      "lat_max": 47.94983033372524
+    },
+    "provenance": "00_find_scenarios.py preset=dense 滑窗搜索候选 #1(dens>=4/ha, area>=12ha), 落在 MEF 核心区 ｜2026-08-25 人工裁决: 东侧裁切 lon_max -129.096740215 -> -129.096784452(UTM East 跨度 204 m -> 200 m)。理由: Leader 的 boustrophedon 测线把车道放在 y=幅宽/2+k*幅宽 且 y<=y_max, 声呐只覆盖到「最后车道+幅宽/2」= 200 m; 原 bbox 东侧 (200, 204] 那条带**永远扫不到**, 里面的目标必然漏。 裁到 200 m = 2 条车道的完整覆盖范围, 使场景与局部VRP方法自洽。 原冻结值(2026-08-24)保留在本条以便溯源。",
+    "expected": {
+      "n_targets": 66,
+      "area_ha": 12.0,
+      "density_per_ha": 5.5833,
+      "ar": 3.0
+    },
+    "legacy_output_prefix": null,
+    "frozen_at": "2026-08-25"
+  },
+  {
+    "id": "dense_2",
+    "label": "Dense #2 (High Rise core)",
+    "kind": "searched",
+    "source_tile": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoCentral1mArc.grd",
+    "tile_name": "Central",
+    "bbox_wgs84": {
+      "lon_min": -129.08949770456547,
+      "lon_max": -129.08681529334493,
+      "lat_min": 47.96484344758976,
+      "lat_max": 47.97026987428778
+    },
+    "provenance": "00_find_scenarios.py preset=dense 滑窗搜索候选 #2, 落在 High Rise 核心区",
+    "expected": {
+      "n_targets": 63,
+      "area_ha": 12.0,
+      "density_per_ha": 5.25,
+      "ar": 3.0
+    },
+    "legacy_output_prefix": null,
+    "frozen_at": "2026-08-24"
+  }
+]

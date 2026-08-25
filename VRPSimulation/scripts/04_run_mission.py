@@ -2,12 +2,23 @@
 # -*- coding: utf-8 -*-
 """04 — 跑一次协同探査任务仿真(Leader 广域扫描 + 双 Follower 请求式分区域 VRP)。
 
-输入 : VRPSimulation/waypoints/mothra_waypoints.csv(经 D7 裁切 → 500x100 m / 22 点)
-输出 : VRPSimulation/data/mission.npz              逐时刻时间线(规格 §7)
-       VRPSimulation/data/mission_assignments.json 每次规划的下发序列 + 摘要
-       VRPSimulation/data/mission_timeline.csv     人读版宽表
+输入 : --scenario mothra(默认): VRPSimulation/waypoints/mothra_waypoints.csv
+       (经 D7 裁切 → 500x100 m / 22 点)
+       --scenario <id>(其它场景): Bethmetory_data_process 的场景产物, 整幅不裁切。
+
+       ⚠ window_look_back_m / window_width_m **不随场地 East 跨度缩放** ——
+       它们是 Leader 声呐的固定物理幅宽(100 m,见 `contracts/lawnmower.py` L3 /
+       `contracts/twophase.py` 的说明,与相机 6 m footprint 不可互换), 全部场景
+       统一取 `MissionConfig()` 的契约默认值。East 跨度超过声呐幅宽时,
+       `run_mission` 会自动生成多车道往复测线(`vrpsim/windows.py::leader_track`,
+       车道间距 = 声呐幅宽)覆盖全场, 不是靠拉宽窗口去"合理化"单车道。
+       (2026-08-24 人工订正:此前把 window_width_m 设成等于 East 跨度,导致单车道
+       "看见"整个场地宽度,相当于声呐幅宽随场地伸缩——不诚实。现已改正。)
+输出(统一落在 VRPSimulation/data/scenarios/<id>/, <id> 含 mothra 本身):
+           mission.npz / mission_assignments.json / mission_timeline.csv
 
 运行: D:/nixingxing/Anaconda/envs/auv_py310/python.exe VRPSimulation/scripts/04_run_mission.py
+      D:/nixingxing/Anaconda/envs/auv_py310/python.exe VRPSimulation/scripts/04_run_mission.py --scenario mef
 """
 from __future__ import annotations
 
@@ -21,7 +32,29 @@ import numpy as np
 from vrpsim.contracts.config import DEFAULT_DATA_DIR  # noqa: E402
 from vrpsim.contracts.mission import MissionConfig  # noqa: E402
 from vrpsim.mission import feasibility_estimate, run_mission, save_result  # noqa: E402
-from vrpsim.world import build_mothra_world  # noqa: E402
+from vrpsim.windows import leader_track  # noqa: E402
+from vrpsim.world import build_mothra_world, build_world_for_scenario  # noqa: E402
+
+
+def _follower_starts_flanking_window(world, window_width_m: float):
+    """Follower 初始位置 = Leader **初始窗口**的横向两侧, 不是场地两端。
+
+    起点取 `leader_track` 首点(第一条车道的南端, East = 车道间距/2)左右各让开
+    半个窗口宽 ⇒ 两台正好卡在初始窗口的东西两边界上, 与 Leader 同排出发。
+
+    为什么不能按场地 East 跨度铺开(2026-08-24 人工订正):窗口宽是固定的声呐幅宽
+    (100 m), 与场地宽无关。sparse_2 这类 702 m 宽的场地上, 按场地两端放会把一台
+    扔到离 Leader 首条车道 350 m 远的地方 —— 它开场就要空跑几百米才够得着窗口里
+    的第一个目标, 纯属人为制造的劣势, 且与"Follower 跟在 Leader 窗口里作业"的
+    任务结构不符。
+
+    Mothra(窗口宽 100 == 场地 East 跨度 100)下算得 `((0,0),(0,100))`, 与
+    `MissionConfig` 的冻结默认值逐位相同 ⇒ 该场景行为不变。
+    """
+    path = leader_track(world, window_width_m)
+    n0, e0 = float(path[0][0]), float(path[0][1])
+    half = 0.5 * float(window_width_m)
+    return ((n0, e0 - half), (n0, e0 + half))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -30,13 +63,21 @@ def build_parser() -> argparse.ArgumentParser:
     """
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--scenario", default="mothra",
+                    help="Bethmetory_data_process/scenarios.json 里的场景 id "
+                         "(默认 mothra, 走既有的 D7 裁切世界与固定起点/窗口)")
     # ⚠ 默认值一律**从契约取**,不写字面量:`contracts/mission.py::MissionConfig` 是
     #   唯一真值源,在这里手抄数字等于开第二个源,改契约时必漏。
+    # --scenario 非 mothra 时, window-look-back/width 与 leader/follower 起点会在
+    # main() 里按该场景的 East 跨度重算, 这里的默认值(Mothra 的 100 m)只在
+    # --scenario mothra 时生效, 用户显式传值时始终以显式值为准。
     d = MissionConfig()
-    ap.add_argument("--window-look-back", type=float, default=d.window_look_back_m,
-                    help="窗口沿测线长度 [m]")
-    ap.add_argument("--window-width", type=float, default=d.window_width_m,
-                    help="窗口横向宽度 [m]")
+    ap.add_argument("--window-look-back", type=float, default=None,
+                    help="窗口沿测线长度 [m];缺省: mothra 用契约默认值, "
+                         f"其它场景用该场景 East 跨度(契约默认 {d.window_look_back_m:.0f})")
+    ap.add_argument("--window-width", type=float, default=None,
+                    help="窗口横向宽度 [m];缺省同上"
+                         f"(契约默认 {d.window_width_m:.0f})")
     ap.add_argument("--acoustic-hop", type=float, default=d.acoustic_hop_s,
                     help="单跳声学传输耗时 [s](传播+包时长+保护间隔)")
     ap.add_argument("--usbl-period", type=float, default=d.usbl_period_s,
@@ -61,7 +102,9 @@ def build_parser() -> argparse.ArgumentParser:
                          "**不停船时**的速度;实际完成时刻 = 测线长/它 + 累计停船")
     ap.add_argument("--follower-speed", type=float, default=d.follower_speed_mps)
     ap.add_argument("--dt", type=float, default=d.dt_s)
-    ap.add_argument("--solver", choices=("ortools", "greedy"), default=d.solver)
+    ap.add_argument("--solver", choices=("exact", "ortools", "greedy"),
+                    default=d.solver,
+                    help="求解器口径(D21):exact=小规模池走 Held-Karp 精确最优、超阈值退 ortools;ortools=一律元启发式(消融对照);greedy=确定性贪心")
     ap.add_argument("--nav-drift", type=float, default=d.nav_drift_frac_of_distance,
                     help="Leader 对队友位置的认知误差,按行进距离比例(0.005=0.5%%);"
                          "默认 0 = 解析确定量,非估计")
@@ -73,7 +116,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="仿真时钟上限 [s];跑到这里还没正常终止会明确告警")
     ap.add_argument("--no-dwell-at-projection", action="store_true",
                     help="投影点不停留(它不是观测目标)")
-    ap.add_argument("--out", default=os.path.join(DEFAULT_DATA_DIR, "mission.npz"))
+    ap.add_argument("--out", default=None,
+                    help="默认写 data/scenarios/<id>/mission.npz")
     ap.add_argument("-q", "--quiet", action="store_true")
     return ap
 
@@ -81,9 +125,25 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = build_parser().parse_args()
 
-    cfg = MissionConfig(
-        window_look_back_m=args.window_look_back,
-        window_width_m=args.window_width,
+    is_mothra = args.scenario == "mothra"
+    mw = (build_mothra_world() if is_mothra else build_world_for_scenario(args.scenario))
+
+    # window_look_back_m / window_width_m: 固定物理声呐幅宽, 不随场地缩放 ——
+    # 不传 --window-* 就用 MissionConfig() 的契约默认值(100/100), 全部场景一致。
+    d = MissionConfig()
+    window_look_back = args.window_look_back if args.window_look_back is not None \
+        else d.window_look_back_m
+    window_width = args.window_width if args.window_width is not None \
+        else d.window_width_m
+    # Follower 起点 = 初始窗口的横向两侧(见 `_follower_starts_flanking_window`)。
+    # Mothra 下算得的值与契约默认值逐位相同, 故不分支、统一推导。
+    # Leader 起点不在这里指定 —— 它由 `run_mission` 内部的多车道 `leader_track`
+    # 首点决定(见该函数)。
+    follower_starts = _follower_starts_flanking_window(mw.world, window_width)
+
+    cfg_kwargs = dict(
+        window_look_back_m=window_look_back,
+        window_width_m=window_width,
         acoustic_hop_s=args.acoustic_hop,
         usbl_period_s=args.usbl_period,
         plan_period_s=args.plan_period,
@@ -103,12 +163,24 @@ def main() -> None:
         seed=args.seed,
         dwell_at_projection=not args.no_dwell_at_projection,
     )
+    cfg_kwargs["follower_starts_ned"] = follower_starts
+    cfg = MissionConfig(**cfg_kwargs)
 
-    print("[1/4] 构建场景")
-    mw = build_mothra_world(cfg.sim)
+    out = args.out
+    if out is None:
+        out = os.path.join(DEFAULT_DATA_DIR, "scenarios", args.scenario, "mission.npz")
+
+    print(f"[1/4] 构建场景 {args.scenario}"
+          + ("" if is_mothra else "(整幅, 不做 D7 裁切; Leader 走多车道 lawnmower "
+                                  "测线覆盖全场, Follower 起点卡在初始窗口两侧)"))
     print(f"  世界 {mw.world.x_max_m:.0f}x{mw.world.y_max_m:.0f} m,"
           f" 目标 {mw.dataset.n} 个(丢弃 wp {mw.meta['crop']['dropped_waypoint_ids']})")
-    print(f"  Leader 起点 {cfg.leader_start_ned}  速度 {cfg.leader_speed_mps} m/s")
+    # ⚠ 打印 leader_track 的首点而不是 cfg.leader_start_ned:多车道化之后 Leader
+    #   的实际起点由测线折线决定, 那个配置字段已不再被 `Leader` 消费。
+    _path = leader_track(mw.world, cfg.window_width_m)
+    print(f"  Leader 起点 ({_path[0][0]:.1f}, {_path[0][1]:.1f})  "
+          f"速度 {cfg.leader_speed_mps} m/s  "
+          f"测线 {len(_path) // 2} 条车道(间距 = 声呐幅宽 {cfg.window_width_m:.0f} m)")
     for i, s in enumerate(cfg.follower_starts_ned):
         print(f"  Follower{i} 起点 {s}  速度 {cfg.follower_speed_mps} m/s")
     print(f"  窗口 {cfg.window_look_back_m:.0f}x{cfg.window_width_m:.0f} m(前边界贴 Leader)")
@@ -185,9 +257,9 @@ def main() -> None:
     print(f"  不变量自检: {'全部通过' if ok else '**有违反,见上**'}")
 
     print("[4/4] 落盘")
-    save_result(res, args.out)
-    base = os.path.splitext(args.out)[0]
-    for p in (args.out, base + "_assignments.json", base + "_timeline.csv"):
+    save_result(res, out)
+    base = os.path.splitext(out)[0]
+    for p in (out, base + "_assignments.json", base + "_timeline.csv"):
         print(f"  {os.path.basename(p):32s} {os.path.getsize(p) / 1024:8.1f} KB")
 
 
@@ -253,12 +325,16 @@ def _check_invariants(res) -> bool:
 
     # --- Leader 停船(D16) ----------------------------------------------
     dt = float(res.meta["dt_s"])
-    moved = np.diff(res.leader_north_m) > 1e-12
+    # 多车道起 North 分量在换道横移时几乎不变, 但那不是"停船"——真正的停船是
+    # North 与 East 都不变; 用折线路程增量判定, 单车道场景与旧口径(仅看 North)
+    # 逐位相同(East 恒定时 north-diff 与总位移 diff 相等)。
+    moved = np.hypot(np.diff(res.leader_north_m), np.diff(res.leader_east_m)) > 1e-12
     if np.any(moved & res.leader_holding[:-1]):
         print("  ! Leader 标着停船却仍在前进"); ok = False
-    # 走完测线的时刻应当 = 匀速用时 + 累计停船(浮点余量给一拍)
-    track = float(res.leader_north_m.max())
-    want = track / cfg.leader_speed_mps + res.leader_hold_total_s
+    # 走完测线的时刻应当 = 匀速用时(**折线总路程** / 速度)+ 累计停船(浮点余量给一拍)。
+    # ⚠ 不能用 leader_north_m.max():多车道往复起,North 最大值只是某条车道的
+    #   局部最北点,不是走完全部车道的总路程,见 `MissionResult.leader_distance_m`。
+    want = res.leader_distance_m / cfg.leader_speed_mps + res.leader_hold_total_s
     if abs(res.t_leader_finish_s - want) > dt + 1e-6:
         print(f"  ! Leader 完成时刻 {res.t_leader_finish_s:.1f} s 与"
               f" 匀速{want - res.leader_hold_total_s:.0f}+停船"

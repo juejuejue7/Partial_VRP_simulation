@@ -13,16 +13,17 @@
   它们的分子本身就是一次全局 min-max VRP 的解,放进来会让「全局VRP方法」
   按构造得 1.0 —— 循环论证。详见 `contracts/metrics.py` 文件头。
 
-输入 : VRPSimulation/waypoints/mothra_waypoints.csv
-       VRPSimulation/data/lawnmower.npz + _summary.json(没有就现跑一次)
-输出 : VRPSimulation/data/twophase.npz + _summary.json
-       VRPSimulation/logs/methods_compare.csv
-       VRPSimulation/logs/methods_compare.md
-       VRPSimulation/logs/plan_cost.csv        逐次規劃の池大小 + 求解挂钟耗时
-       VRPSimulation/figures/methods_compare.png
+输入 : --scenario <id>(默认 mothra);场景数据来自 Bethmetory_data_process 的
+       scenarios.json 与 outputs/scenarios/<id>/
+输出(统一落在按场景分的目录下,<id> 含 mothra 本身):
+       VRPSimulation/data/scenarios/<id>/{mission,twophase,lawnmower}.npz + _summary
+       VRPSimulation/logs/scenarios/<id>/methods_compare.csv / .md / plan_cost.csv
+       VRPSimulation/figures/scenarios/<id>/methods_compare.png
 
 运行: D:/nixingxing/Anaconda/envs/auv_py310/python.exe \
       VRPSimulation/scripts/09_compare_methods.py
+      D:/nixingxing/Anaconda/envs/auv_py310/python.exe \
+      VRPSimulation/scripts/09_compare_methods.py --scenario sparse_2 --max-time 200000
 """
 from __future__ import annotations
 
@@ -32,6 +33,7 @@ import argparse
 import io
 import os
 import textwrap
+from collections import Counter
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -49,15 +51,30 @@ from vrpsim.mission import run_mission, save_result  # noqa: E402
 from vrpsim.report import (metrics_visible_for, print_metric_table,  # noqa: E402
                            write_metric_csv, writable_path)
 from vrpsim.twophase import run_twophase, save_twophase_result  # noqa: E402
-from vrpsim.world import build_mothra_world  # noqa: E402
+from vrpsim.windows import leader_track  # noqa: E402
+from vrpsim.world import build_mothra_world, build_world_for_scenario  # noqa: E402
 
 LOGS_DIR = os.path.join(os.path.dirname(DEFAULT_DATA_DIR), "logs")
+
+
+def follower_starts_flanking_window(world, window_width_m: float):
+    """Follower 初始位置 = Leader **初始窗口**的横向两侧(与 04_run_mission.py 同一规则)。
+
+    见该文件的同名函数:窗口宽是固定的声呐幅宽,与场地宽无关;按场地两端铺开会让一台
+    开场就要空跑几百米。Mothra 下算得 `((0,0),(0,100))`,与契约默认值逐位相同。
+    """
+    path = leader_track(world, window_width_m)
+    n0, e0 = float(path[0][0]), float(path[0][1])
+    half = 0.5 * float(window_width_m)
+    return ((n0, e0 - half), (n0, e0 + half))
 
 
 def build_parser() -> argparse.ArgumentParser:
     d = MissionConfig()
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--scenario", default="mothra",
+                    help="Bethmetory_data_process/scenarios.json 里的场景 id(默认 mothra)")
     # 局部VRP 用哪组参数 —— 默认取 08 扫描出的最优组(L0.5 / T15 / 等待开)
     ap.add_argument("--leader-speed", type=float, default=d.leader_speed_mps)
     ap.add_argument("--follower-speed", type=float, default=d.follower_speed_mps)
@@ -65,11 +82,14 @@ def build_parser() -> argparse.ArgumentParser:
                     help="局部VRP 的路径规划周期 [s];默认 15 = 08 扫描出的最优组")
     ap.add_argument("--usbl-period", type=float, default=d.usbl_period_s)
     ap.add_argument("--dwell", type=float, default=d.dwell_time_s)
-    ap.add_argument("--solver", choices=("ortools", "greedy"), default=d.solver)
+    ap.add_argument("--solver", choices=("exact", "ortools", "greedy"),
+                    default=d.solver,
+                    help="求解器口径(D21):exact=小规模池走 Held-Karp 精确最优、超阈值退 ortools;ortools=一律元启发式(消融对照);greedy=确定性贪心")
     ap.add_argument("--vrp-time-limit", type=float, default=d.vrp_time_limit_s)
     ap.add_argument("--max-time", type=float, default=8000.0)
-    ap.add_argument("--logs-dir", default=LOGS_DIR)
-    ap.add_argument("--data-dir", default=DEFAULT_DATA_DIR)
+    # 缺省 None ⇒ main() 按 --scenario 拼成 <root>/scenarios/<id>/
+    ap.add_argument("--logs-dir", default=None)
+    ap.add_argument("--data-dir", default=None)
     ap.add_argument("--no-figure", action="store_true")
     return ap
 
@@ -79,6 +99,7 @@ def build_parser() -> argparse.ArgumentParser:
 # ======================================================================
 def compare_command(args) -> str:
     return (f"$PY VRPSimulation/scripts/09_compare_methods.py"
+            f" --scenario {args.scenario}"
             f" --leader-speed {args.leader_speed:g}"
             f" --follower-speed {args.follower_speed:g}"
             f" --plan-period {args.plan_period:g}"
@@ -379,32 +400,48 @@ def write_report(rows: List[Dict[str, Any]], path: str, args,
             rr = _pearson([r["pool_size"] for r in act],
                           [r["solve_wall_s"] for r in act])
             over = [r for r in act if r["solve_wall_s"] > budget * 1.05]
-            print(f"**耗时を決めているのは池の大きさではなく「解くか解かないか」。** "
-                  f"局部VRP の {len(vrp_recs)} ラウンドのうち **{vs['n_empty']} "
+            # ⚠ ここの叙述は**実際に走った求解器で分岐する**（D21 の分流）。
+            #   固定文を書くと、口径を変えた瞬間にレポートが嘘をつく。
+            used = Counter(r["solver"] for r in act)
+            main_solver = used.most_common(1)[0][0]
+            mix = "、".join(f"`{k}` {v} ラウンド" for k, v in used.most_common())
+            print(f"局部VRP の {len(vrp_recs)} ラウンドのうち **{vs['n_empty']} "
                   f"ラウンドは池が空**（下発済みで未観測の目標しか残っていない）で、"
-                  f"求解は走らず耗时ちょうど 0。残る {len(act)} ラウンドは池が "
-                  f"{min(r['pool_size'] for r in act)}〜"
-                  f"{max(r['pool_size'] for r in act)} 点と動くのに耗时は "
+                  f"求解は走らず耗时ちょうど 0。残る {len(act)} ラウンドの内訳は "
+                  f"{mix}（池 {min(r['pool_size'] for r in act)}〜"
+                  f"{max(r['pool_size'] for r in act)} 点、耗时 "
                   f"{vs['wall_min_active_s'] * 1e3:.0f}〜"
-                  f"{vs['wall_max_active_s'] * 1e3:.0f} ms"
-                  + (f"、池大小との相関は r = {rr:+.2f}（ほぼ無相関）"
-                     if np.isfinite(rr) and abs(rr) < 0.3 else
-                     (f"、池大小との相関 r = {rr:+.2f}" if np.isfinite(rr) else ""))
-                  + f"。理由は明白で、**OR-Tools の GLS は与えた時間予算 "
-                  f"`vrp_time_limit_s = {budget:g} s` を使い切る**"
-                  "メタヒューリスティクスだから —— この列が測っているのは"
-                  "**予算であって必要量ではない**。"
-                  "真に必要な時間を知りたければ予算を下げて解の劣化を見るしかなく、"
-                  "それは別実験（未実施）。\n", file=buf)
-            if over:
-                worst = max(r["solve_wall_s"] for r in over)
-                print(f"⚠ **予算は保証ではない**：{len(over)} ラウンドが予算を超え、"
-                      f"最悪 **{worst * 1e3:.0f} ms**（池 "
-                      f"{[r['pool_size'] for r in over]} 点）まで伸びた。"
-                      f"`vrp_time_limit_s` は OR-Tools への*要求*であって"
-                      "ハードリミットではなく、宿主機の揺らぎもここに乗る。"
-                      "実機で計画周期に上限を課すなら、この裾を見込む必要がある。\n",
-                      file=buf)
+                  f"{vs['wall_max_active_s'] * 1e3:.0f} ms）。\n", file=buf)
+
+            if main_solver == "exact":
+                print(f"**この列は「必要量」を測っている。** 精確解（Held-Karp、"
+                      f"D21）の耗时は池大小 k の決定的な関数 O(2^k·k²) であって、"
+                      f"予算 `vrp_time_limit_s` とは無関係 —— 実測でも池大小との"
+                      f"相関は r = {rr:+.2f}"
+                      + ("（強い正相関、理論どおり）" if np.isfinite(rr) and rr > 0.5
+                         else "")
+                      + f"。最悪 **{vs['wall_max_active_s'] * 1e3:.0f} ms** は"
+                      f"規劃周期 {args.plan_period:g} s に対し十分小さく、"
+                      f"`plan_solve_s = 0`（瞬時に解けたことにする）という仮定は"
+                      f"この規模では成り立つ。加えて精確解は構造的に決定的なので、"
+                      f"同一入力なら再実行しても逐位同一 —— "
+                      f"OR-Tools 側にあった「予算内の反復回数が機械負荷で揺れる」"
+                      f"という再現性の問題がここには無い。\n", file=buf)
+            else:
+                print(f"**この列が測っているのは予算であって必要量ではない。** "
+                      f"OR-Tools の GLS は与えた時間予算 "
+                      f"`vrp_time_limit_s = {budget:g} s` を使い切る"
+                      f"メタヒューリスティクスなので、池大小が動いても耗时はほぼ"
+                      f"一定になる（実測 r = {rr:+.2f}）。\n", file=buf)
+                if over:
+                    worst = max(r["solve_wall_s"] for r in over)
+                    print(f"⚠ **予算は保証ではない**：{len(over)} ラウンドが予算を超え、"
+                          f"最悪 **{worst * 1e3:.0f} ms**（池 "
+                          f"{[r['pool_size'] for r in over]} 点）まで伸びた。"
+                          f"`vrp_time_limit_s` は OR-Tools への*要求*であって"
+                          "ハードリミットではなく、宿主機の揺らぎもここに乗る。"
+                          "実機で計画周期に上限を課すなら、この裾を見込む必要がある。\n",
+                          file=buf)
 
         by = {s["scenario"]: s for s in plan_cost}
         tp = by.get(SCENARIO_TWOPHASE)
@@ -419,8 +456,16 @@ def write_report(rows: List[Dict[str, Any]], path: str, args,
                   "⇒ 本比較で二段式の計画時間を計上しないのは妥当。\n", file=buf)
         if vp:
             print("### 局部VRP（提案）：無視は**できるが、条件付き**\n", file=buf)
+            # ⚠ 二段式との大小関係は口径で逆転する（D21 で局部側が精確解になり、
+            #   合計耗时が二段式の 30 s 予算を下回った）。固定文にせず実測から書く。
+            _ratio = ((vp["wall_total_s"] / tp["wall_total_s"])
+                      if tp and tp["wall_total_s"] > 0 else float("nan"))
+            _rel = ("二段式と同程度" if not np.isfinite(_ratio) or 0.5 <= _ratio <= 2.0
+                    else (f"二段式の {_ratio:.2g} 倍" if _ratio > 2.0
+                          else f"二段式の {1 / _ratio:.2g} 分の 1"))
             print(f"合計 {vp['wall_total_s']:.1f} s は任務長 {vp['t_finish_s']:.1f} s の "
-                  f"**{vp['frac_of_mission']:.1%}** に相当し、二段式より 1〜2 桁大きい。"
+                  f"**{vp['frac_of_mission']:.1%}** に相当し、{_rel}（{len(act)} 回の"
+                  f"求解の総和 対 1 回の求解）。"
                   "ただしこれは**任務時間に直列で足される量ではない** —— "
                   f"実際に解いた 1 回は {vp['wall_mean_active_s'] * 1e3:.0f} ms、"
                   f"規劃周期 {args.plan_period:g} s の "
@@ -560,15 +605,27 @@ def plot_methods(rows: List[Dict[str, Any]], visit_times: Dict[str, np.ndarray],
 # ======================================================================
 def main() -> None:
     args = build_parser().parse_args()
-    os.makedirs(args.logs_dir, exist_ok=True)
-    os.makedirs(args.data_dir, exist_ok=True)
+    sid = args.scenario
+    data_dir = args.data_dir or os.path.join(DEFAULT_DATA_DIR, "scenarios", sid)
+    logs_dir = args.logs_dir or os.path.join(LOGS_DIR, "scenarios", sid)
+    fig_dir = os.path.join(DEFAULT_FIGURE_DIR, "scenarios", sid)
+    os.makedirs(logs_dir, exist_ok=True)
+    os.makedirs(data_dir, exist_ok=True)
 
-    print("[1/5] 构建场景")
-    mw = build_mothra_world()
+    print(f"[1/5] 构建场景 {sid}")
+    mw = (build_mothra_world() if sid == "mothra" else build_world_for_scenario(sid))
 
+    # 三方法共用同一份运动学/场景参数(D14/D19 的"配置相同是结构保证")。
+    # Follower 起点按初始窗口两侧推导 —— 与 04_run_mission.py 同一规则,
+    # 否则宽场地上一台开场就要空跑几百米,三方法的对比会被起点差异污染。
     shared = dict(follower_speed_mps=args.follower_speed, dwell_time_s=args.dwell,
                   solver=args.solver, vrp_time_limit_s=args.vrp_time_limit,
-                  max_mission_time_s=args.max_time)
+                  max_mission_time_s=args.max_time,
+                  follower_starts_ned=follower_starts_flanking_window(
+                      mw.world, MissionConfig().window_width_m))
+    print(f"  世界 {mw.world.x_max_m:.0f}x{mw.world.y_max_m:.0f} m, "
+          f"目标 {mw.dataset.n} 个, Leader 测线 "
+          f"{len(leader_track(mw.world, MissionConfig().window_width_m)) // 2} 条车道")
 
     rows: List[Dict[str, Any]] = []
     visit_times: Dict[str, np.ndarray] = {}
@@ -583,7 +640,7 @@ def main() -> None:
     s_vrp = res_vrp.summary()
     print(f" 観測 {s_vrp['visited']}/{s_vrp['n_targets']}  "
           f"収工 {s_vrp['t_finish_s']:.1f}s  {s_vrp['t_per_target_s']:.1f} s/目標")
-    save_result(res_vrp, os.path.join(args.data_dir, "mission.npz"))
+    save_result(res_vrp, os.path.join(data_dir, "mission.npz"))
     rows.append({"run_id": "vrp", "scenario": SCENARIO_VRP,
                  "_label": SCENARIO_NAMES[SCENARIO_VRP], "metrics": s_vrp})
     visit_times[SCENARIO_VRP] = res_vrp.visit_time_s
@@ -597,7 +654,7 @@ def main() -> None:
     print(f" 観測 {s_2p['visited']}/{s_2p['n_targets']}  "
           f"探査 {s_2p['t_survey_s']:.1f}s + 観測 {s_2p['t_observe_s']:.1f}s "
           f"= {s_2p['t_finish_s']:.1f}s  {s_2p['t_per_target_s']:.1f} s/目標")
-    save_twophase_result(res_2p, os.path.join(args.data_dir, "twophase.npz"))
+    save_twophase_result(res_2p, os.path.join(data_dir, "twophase.npz"))
     rows.append({"run_id": "twophase", "scenario": SCENARIO_TWOPHASE,
                  "_label": SCENARIO_NAMES[SCENARIO_TWOPHASE], "metrics": s_2p})
     visit_times[SCENARIO_TWOPHASE] = res_2p.visit_time_s
@@ -645,7 +702,7 @@ def main() -> None:
                      "duty_idle_frac": idle, "duty_productive_frac": 1.0 - idle})
     print(f" 観測 {s_lm['visited']}/{s_lm['n_targets']}  "
           f"収工 {tf:.1f}s  {s_lm['t_per_target_s']:.1f} s/目標")
-    save_lawn_result(res_lm, os.path.join(args.data_dir, "lawnmower.npz"))
+    save_lawn_result(res_lm, os.path.join(data_dir, "lawnmower.npz"))
     rows.append({"run_id": "lawnmower", "scenario": SCENARIO_LAWNMOWER,
                  "_label": SCENARIO_NAMES[SCENARIO_LAWNMOWER], "metrics": s_lm})
     visit_times[SCENARIO_LAWNMOWER] = res_lm.visit_time_s
@@ -678,15 +735,15 @@ def main() -> None:
 
     notes = {"t_survey_s": s_2p["t_survey_s"], "t_observe_s": s_2p["t_observe_s"],
              "t_finish_s": s_2p["t_finish_s"]}
-    csv_p = write_metric_csv(rows, os.path.join(args.logs_dir, "methods_compare.csv"),
+    csv_p = write_metric_csv(rows, os.path.join(logs_dir, "methods_compare.csv"),
                              lead_cols=("run_id", "scenario"),
                              scenarios=ALL_SCENARIOS)
-    pc_p = write_plan_cost_csv(recs, os.path.join(args.logs_dir, "plan_cost.csv"))
-    md_p = write_report(rows, os.path.join(args.logs_dir, "methods_compare.md"),
+    pc_p = write_plan_cost_csv(recs, os.path.join(logs_dir, "plan_cost.csv"))
+    md_p = write_report(rows, os.path.join(logs_dir, "methods_compare.md"),
                         args, notes, plan_cost=pc, plan_recs=recs)
     outs = [csv_p, pc_p, md_p]
     if not args.no_figure:
-        fig_p = os.path.join(DEFAULT_FIGURE_DIR, "methods_compare.png")
+        fig_p = os.path.join(fig_dir, "methods_compare.png")
         plot_methods(rows, visit_times, fig_p)
         outs.append(fig_p)
     print()

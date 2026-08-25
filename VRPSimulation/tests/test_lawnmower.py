@@ -306,6 +306,7 @@ def test_vrp_t_complete_is_nan_without_full_coverage(mw):
     """
     bad = run_mission(MissionConfig(leader_wait_on_lagging_follower=False,
                                     leader_wait_on_endangered_target=False,
+                                    leader_wait_on_turnaround=False,
                                     **FAST_VRP), mw)
     assert bad.coverage < 1.0
     assert np.isnan(bad.t_complete_s)

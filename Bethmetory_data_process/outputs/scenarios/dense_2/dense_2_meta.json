@@ -1,0 +1,130 @@
+{
+  "scenario": {
+    "id": "dense_2",
+    "label": "Dense #2 (High Rise core)",
+    "kind": "searched",
+    "provenance": "00_find_scenarios.py preset=dense 滑窗搜索候选 #2, 落在 High Rise 核心区"
+  },
+  "source": {
+    "path": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoCentral1mArc.grd",
+    "driver": "netCDF",
+    "dtype": "float32",
+    "shape": [
+      2913,
+      6349
+    ],
+    "crs_embedded": null,
+    "crs_assigned": "EPSG:4326",
+    "nodata": NaN,
+    "cellsize_deg": 1.3388508184344169e-05,
+    "bounds": [
+      -129.1410066942541,
+      47.934993305745905,
+      -129.05600305579168,
+      47.97399403008691
+    ]
+  },
+  "crop_wgs84": {
+    "shape": [
+      406,
+      201
+    ],
+    "n_cells": 81606,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2195.26611328125,
+    "z_max": -2127.112548828125,
+    "z_mean": -2168.043695257285,
+    "z_std": 9.221185619525494,
+    "relief_m": 68.153564453125,
+    "crs": "EPSG:4326",
+    "bounds_lon_lat": [
+      -129.08950110326893,
+      47.96483629048881,
+      -129.08681001312388,
+      47.970272024811656
+    ],
+    "cellsize_deg": 1.3388508184344169e-05,
+    "requested_bbox": {
+      "lon_min": -129.08949770456547,
+      "lon_max": -129.08681529334493,
+      "lat_min": 47.96484344758976,
+      "lat_max": 47.97026987428778
+    }
+  },
+  "utm9n_1m": {
+    "shape": [
+      605,
+      202
+    ],
+    "n_cells": 122210,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2195.251400498619,
+    "z_max": -2128.062685468874,
+    "z_mean": -2168.089092644138,
+    "z_std": 9.25321940778083,
+    "relief_m": 67.18871502974525,
+    "crs": "EPSG:32609",
+    "resolution_m": [
+      1.0,
+      1.0
+    ],
+    "bounds_utm": [
+      493319.0,
+      5312395.0,
+      493521.0,
+      5313000.0
+    ],
+    "resampling": "bilinear",
+    "transform": [
+      493319.0,
+      1.0,
+      0.0,
+      5313000.0,
+      0.0,
+      -1.0
+    ]
+  },
+  "outputs": [
+    "dense_2_bundle.npz",
+    "dense_2_meta.json",
+    "dense_2_utm9n_1m.asc",
+    "dense_2_utm9n_1m.asc.aux.xml",
+    "dense_2_utm9n_1m.npz",
+    "dense_2_utm9n_1m.prj",
+    "dense_2_utm9n_1m.tif",
+    "dense_2_vents.csv",
+    "dense_2_vents.geojson",
+    "dense_2_wgs84.asc",
+    "dense_2_wgs84.asc.aux.xml",
+    "dense_2_wgs84.prj",
+    "dense_2_wgs84.tif"
+  ],
+  "vents": {
+    "source": "Bethy_data/TABLE_SI.xlsx (Supplemental Table S1)",
+    "selection": "经纬度落在 crop_wgs84.bounds_lon_lat 内(几何口径, 非标签口径)",
+    "cross_check": "searched 场景无对应 Vent Field Name 标签, 跳过交叉核对",
+    "n_total_in_table": 572,
+    "n_selected": 63,
+    "by_morphology": {
+      "chimney": 57,
+      "mound": 6
+    },
+    "height_m_range": [
+      3,
+      27
+    ],
+    "named": [
+      "Baltic",
+      "Blue Moon",
+      "Boardwalk",
+      "Fairy Castle",
+      "Godzilla",
+      "Knight",
+      "Park Place",
+      "Three Sisters"
+    ],
+    "note": "height_m = 烟囱高出海底的高度(表中给定); seafloor_depth_m = 本项目栅格在该点的海底水深(负向下), 两者含义不同"
+  }
+}

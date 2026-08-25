@@ -1,0 +1,138 @@
+{
+  "scenario": {
+    "id": "dense_1",
+    "label": "Dense #1 (MEF core)",
+    "kind": "searched",
+    "provenance": "00_find_scenarios.py preset=dense 滑窗搜索候选 #1(dens>=4/ha, area>=12ha), 落在 MEF 核心区 ｜2026-08-25 人工裁决: 东侧裁切 lon_max -129.096740215 -> -129.096784452(UTM East 跨度 204 m -> 200 m)。理由: Leader 的 boustrophedon 测线把车道放在 y=幅宽/2+k*幅宽 且 y<=y_max, 声呐只覆盖到「最后车道+幅宽/2」= 200 m; 原 bbox 东侧 (200, 204] 那条带**永远扫不到**, 里面的目标必然漏。 裁到 200 m = 2 条车道的完整覆盖范围, 使场景与局部VRP方法自洽。 原冻结值(2026-08-24)保留在本条以便溯源。"
+  },
+  "source": {
+    "path": "Bethmetory_data/MGDS_Download/JdF_Endeavour_Bathymetry/EndeavourAUVTopoCentral1mArc.grd",
+    "driver": "netCDF",
+    "dtype": "float32",
+    "shape": [
+      2913,
+      6349
+    ],
+    "crs_embedded": null,
+    "crs_assigned": "EPSG:4326",
+    "nodata": NaN,
+    "cellsize_deg": 1.3388508184344169e-05,
+    "bounds": [
+      -129.1410066942541,
+      47.934993305745905,
+      -129.05600305579168,
+      47.97399403008691
+    ]
+  },
+  "crop_wgs84": {
+    "shape": [
+      407,
+      198
+    ],
+    "n_cells": 80586,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2220.10693359375,
+    "z_max": -2167.44482421875,
+    "z_mean": -2199.5914468116507,
+    "z_std": 9.105927954693119,
+    "relief_m": 52.662109375,
+    "crs": "EPSG:4326",
+    "bounds_lon_lat": [
+      -129.0994353763417,
+      47.944392038491316,
+      -129.0967844517212,
+      47.94984116132235
+    ],
+    "cellsize_deg": 1.3388508184344169e-05,
+    "requested_bbox": {
+      "lon_min": -129.0994226260815,
+      "lon_max": -129.096784452,
+      "lat_min": 47.94440390702722,
+      "lat_max": 47.94983033372524
+    }
+  },
+  "utm9n_1m": {
+    "shape": [
+      607,
+      200
+    ],
+    "n_cells": 121400,
+    "n_nodata": 0,
+    "nodata_pct": 0.0,
+    "z_min": -2220.0857272211065,
+    "z_max": -2167.664618775137,
+    "z_mean": -2199.541372001911,
+    "z_std": 9.121513240276805,
+    "relief_m": 52.42110844596937,
+    "crs": "EPSG:32609",
+    "resolution_m": [
+      1.0,
+      1.0
+    ],
+    "bounds_utm": [
+      492574.0,
+      5310124.0,
+      492774.0,
+      5310731.0
+    ],
+    "resampling": "bilinear",
+    "transform": [
+      492574.0,
+      1.0,
+      0.0,
+      5310731.0,
+      0.0,
+      -1.0
+    ]
+  },
+  "outputs": [
+    "dense_1_bundle.npz",
+    "dense_1_meta.json",
+    "dense_1_utm9n_1m.asc",
+    "dense_1_utm9n_1m.asc.aux.xml",
+    "dense_1_utm9n_1m.npz",
+    "dense_1_utm9n_1m.prj",
+    "dense_1_utm9n_1m.tif",
+    "dense_1_vents.csv",
+    "dense_1_vents.geojson",
+    "dense_1_waypoints.csv",
+    "dense_1_waypoints_meta.json",
+    "dense_1_wgs84.asc",
+    "dense_1_wgs84.asc.aux.xml",
+    "dense_1_wgs84.prj",
+    "dense_1_wgs84.tif"
+  ],
+  "vents": {
+    "source": "Bethy_data/TABLE_SI.xlsx (Supplemental Table S1)",
+    "selection": "经纬度落在 crop_wgs84.bounds_lon_lat 内(几何口径, 非标签口径)",
+    "cross_check": "searched 场景无对应 Vent Field Name 标签, 跳过交叉核对",
+    "n_total_in_table": 572,
+    "n_selected": 66,
+    "by_morphology": {
+      "chimney": 56,
+      "mound": 10
+    },
+    "height_m_range": [
+      3,
+      24
+    ],
+    "named": [
+      "Bastille",
+      "Crypto",
+      "Dante",
+      "Dudley",
+      "Grotto",
+      "Grotto N. Tower",
+      "Lobo",
+      "Milli-Q",
+      "Needle",
+      "Peanut",
+      "S&M",
+      "Sully",
+      "TP",
+      "Tara"
+    ],
+    "note": "height_m = 烟囱高出海底的高度(表中给定); seafloor_depth_m = 本项目栅格在该点的海底水深(负向下), 两者含义不同"
+  }
+}

@@ -18,6 +18,7 @@ D9(人工裁决):窗口几何**严格规则**,不按目标分布调边界。Lead
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
 
@@ -29,7 +30,55 @@ from msim.env_static.leader_path import lawnmower_waypoints
 from msim.geometry.window import get_window, window_cells, window_contains_world
 
 __all__ = ["WindowSnapshot", "leader_track", "window_anchors", "enumerate_windows",
-           "targets_in_window", "window_occupancy"]
+           "targets_in_window", "window_occupancy", "along_back_m",
+           "rear_edge_north_m", "window_north_span"]
+
+
+def along_back_m(region: WindowRegion, xy) -> float:
+    """点到 Leader 的**沿后方**距离 s(米)。
+
+    与 `msim.geometry.window._local_coords` 的 s 分量逐式相同(那是私有函数,
+    这里按同一份公式复算而不是 import 私有名):`s = d · back`,
+    `back = (-cos psi, -sin psi)`。
+
+    语义:s 随 Leader 前进而单调增大 —— 目标"掉出窗口后沿"就是 s 越过
+    `region.look_back_m`。**判后沿必须用它,不能用固定的 North 坐标**:
+    多车道 boustrophedon 的南行测线上 psi=pi,后沿在 Leader **北**侧,
+    拿"North 减 look_back"当后沿会让判据整条失效(2026-08-24 修复的 bug)。
+    """
+    lx = float(region.leader_pose[0])
+    ly = float(region.leader_pose[1])
+    psi = float(region.leader_pose[2])
+    return -((float(xy[0]) - lx) * math.cos(psi) + (float(xy[1]) - ly) * math.sin(psi))
+
+
+def rear_edge_north_m(leader_north_m: float, look_back_m: float, psi: float) -> float:
+    """窗口**沿测线方向**后沿的 North 坐标。北行 = north - look_back;南行 = north + look_back。
+
+    ⚠ 只在 Leader 沿 North 走(psi ≈ 0 或 pi)时才是"窗口的 North 边界"。换道横移段
+      (psi ≈ ±pi/2)窗口整体偏在 Leader 东/西侧,其 North 跨度由**宽度**而非
+      look_back 决定 —— 那种情况要用 `window_north_span`。
+    """
+    return float(leader_north_m) - float(look_back_m) * math.cos(float(psi))
+
+
+def window_north_span(region: WindowRegion) -> Tuple[float, float]:
+    """窗口矩形在 North 上的真实跨度 (lo, hi)。
+
+    取 4 个角的 North 极值, 故对任意 psi 都成立:
+      * 北行 psi=0   -> (north - look_back, north)
+      * 南行 psi=pi  -> (north, north + look_back)
+      * 横移 psi=±pi/2 -> (north - width/2, north + width/2)   ← 由宽度决定
+    供逐拍记录与出图用(`MissionResult.window_north`)。
+    """
+    n = float(region.leader_pose[0])
+    psi = float(region.leader_pose[2])
+    lb = float(region.look_back_m)
+    hw = 0.5 * float(region.width_m)
+    c, s = math.cos(psi), math.sin(psi)
+    # back = (-c, -s), lat = (-s, c);只需 North 分量
+    norths = [n + sb * (-c) + tl * (-s) for sb in (0.0, lb) for tl in (-hw, hw)]
+    return min(norths), max(norths)
 
 # Leader 沿 +North 前进时的航向(psi 从 North 起、向 East 为正)
 _PSI_NORTH = 0.0
