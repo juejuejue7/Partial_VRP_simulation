@@ -18,6 +18,7 @@
 """
 from __future__ import annotations
 
+import math
 import time
 from typing import List, Optional, Sequence, Tuple
 
@@ -129,7 +130,8 @@ def _spread_1d(vals: Sequence[float], min_sep: float,
 def project_to_window_front_multi(positions_ned: Sequence[np.ndarray],
                                   region: WindowRegion, world_east_max_m: float,
                                   *, min_sep_m: float,
-                                  active: Optional[Sequence[bool]] = None
+                                  active: Optional[Sequence[bool]] = None,
+                                  world_north_max_m: Optional[float] = None
                                   ) -> List[Optional[np.ndarray]]:
     """一次性给多台 Follower 生成投影点,并保证彼此横向至少隔开 `min_sep_m`。
 
@@ -157,18 +159,44 @@ def project_to_window_front_multi(positions_ned: Sequence[np.ndarray],
     act = [True] * n if active is None else [bool(x) for x in active]
     leader_n = float(region.leader_pose[0])
     leader_e = float(region.leader_pose[1])
+    psi = float(region.leader_pose[2])
     half = float(region.width_m) / 2.0
-    lo = max(leader_e - half, 0.0)
-    hi = min(leader_e + half, float(world_east_max_m))
+
+    # 窗口前沿 = 过 Leader、垂直于航向的那条线;横向单位向量与 `along_back_m` 的
+    # `back = (-cos psi, -sin psi)` 右手配对(lat 指向 Leader 左手侧的反向,符号不
+    # 影响结果 —— 它只是给这条线定个参数化)。
+    lat = (-math.sin(psi), math.cos(psi))
+
+    # 参数化 p(u) = leader + u * lat,求 u 的可行区间:
+    #   (a) 落在窗口横向范围内 |u| <= half;
+    #   (b) 点仍在场地矩形内(旧实现只夹 East —— 那在 psi=0/pi 时够用,因为那时
+    #       lat=(0,+-1)、North 根本不随 u 变;横移段 lat=(-+1,0) 才需要 North 边界)。
+    lo, hi = -half, half
+    bounds = ((0, leader_n, None if world_north_max_m is None
+               else float(world_north_max_m)),
+              (1, leader_e, float(world_east_max_m)))
+    for axis, c0, span in bounds:
+        if span is None:
+            continue
+        a = lat[axis]
+        if abs(a) < 1e-12:
+            continue                        # 该轴不随 u 变化,无约束
+        u1, u2 = (0.0 - c0) / a, (span - c0) / a
+        lo, hi = max(lo, min(u1, u2)), min(hi, max(u1, u2))
+    if hi < lo:                             # Leader 贴边时可行区间可能退化
+        lo = hi = 0.5 * (lo + hi)
 
     idx = [i for i in range(n) if act[i]]
-    easts = [float(np.clip(np.asarray(positions_ned[i], dtype=FLOAT).reshape(2)[1],
-                           lo, hi)) for i in idx]
-    spread = _spread_1d(easts, float(min_sep_m), lo, hi)
+    us = []
+    for i in idx:
+        p = np.asarray(positions_ned[i], dtype=FLOAT).reshape(2)
+        u = (p[0] - leader_n) * lat[0] + (p[1] - leader_e) * lat[1]
+        us.append(float(np.clip(u, lo, hi)))
+    spread = _spread_1d(us, float(min_sep_m), lo, hi)
 
     out: List[Optional[np.ndarray]] = [None] * n
-    for i, e in zip(idx, spread):
-        out[i] = np.array([leader_n, e], dtype=FLOAT)
+    for i, u in zip(idx, spread):
+        out[i] = np.array([leader_n + u * lat[0], leader_e + u * lat[1]], dtype=FLOAT)
     return out
 
 
@@ -394,7 +422,8 @@ def plan_round(*, t_plan_s: float, t_deliver_s: float,
                targets_ned: np.ndarray, waypoint_ids: np.ndarray,
                region: WindowRegion, visited: Sequence[bool],
                occupied: Sequence[int], world_east_max_m: float,
-               cfg: MissionConfig) -> Tuple[List[Assignment], float]:
+               cfg: MissionConfig,
+               world_north_max_m: Optional[float] = None) -> Tuple[List[Assignment], float]:
     """一轮联合规划:**一次**解出全部 Follower 的序列。
 
     步骤(规格 §4,D15 时序):
@@ -442,7 +471,8 @@ def plan_round(*, t_plan_s: float, t_deliver_s: float,
     need_proj = [len(p) < cfg.max_sequence_len for p in picked_all]
     proj_pts = project_to_window_front_multi(
         starts, region, world_east_max_m,
-        min_sep_m=cfg.projection_min_separation_m, active=need_proj)
+        min_sep_m=cfg.projection_min_separation_m, active=need_proj,
+        world_north_max_m=world_north_max_m)
 
     out: List[Assignment] = []
     for i in range(len(starts)):

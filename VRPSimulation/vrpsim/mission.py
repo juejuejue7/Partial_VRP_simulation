@@ -646,7 +646,8 @@ def run_mission(cfg: Optional[MissionConfig] = None,
                 follower_positions=positions,
                 targets_ned=ds.targets_ned, waypoint_ids=ds.waypoint_id,
                 region=region, visited=seen, occupied=occupied,
-                world_east_max_m=mw.world.y_max_m, cfg=cfg)
+                world_east_max_m=mw.world.y_max_m, cfg=cfg,
+                world_north_max_m=mw.world.x_max_m)
             assignments.extend(asgs)
             plan_rounds.append(PlanRound(
                 round_idx=round_idx, t_start_s=float(t),

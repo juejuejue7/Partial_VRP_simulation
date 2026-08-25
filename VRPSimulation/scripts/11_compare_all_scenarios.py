@@ -56,6 +56,45 @@ def load_rows(sid: str) -> Dict[str, Dict[str, str]]:
         return {r["run_id"]: r for r in csv.DictReader(f)}
 
 
+def solver_provenance(buf) -> None:
+    """本表是用哪套求解器口径跑出来的 —— **从落盘的逐轮记录反查，不手写**。
+
+    D21 前后同一批场景的数字差别很大（二段式最长单机航程差 13~36%），表里不写清
+    口径，几个月后就没人能分辨手上这份是哪一版。故此节从
+    `logs/scenarios/<id>/plan_cost.csv` 的 `solver` 列统计实际走过的求解器。
+    手写会漂移，所以一个字都不手写。
+    """
+    from collections import Counter
+    per_method: Dict[str, Counter] = {}
+    for sid in SIDS:
+        p = os.path.join(LOGS_DIR, "scenarios", sid, "plan_cost.csv")
+        if not os.path.isfile(p):
+            continue
+        with open(p, encoding="utf-8-sig") as f:
+            for r in csv.DictReader(f):
+                if int(float(r["pool_size"])) <= 0:
+                    continue           # 池空的轮次没解过，不该算进求解器分布
+                per_method.setdefault(r["scenario"], Counter())[r["solver"]] += 1
+    if not per_method:
+        return
+    print("### 求解器口径（D21）\n", file=buf)
+    print("| 方法 | 実際に走った求解器（全场景合计の求解次数）|", file=buf)
+    print("|---|---|", file=buf)
+    for key, label in METH:
+        c = per_method.get(key)
+        cell = ("該当なし（任务期间不解任何问题）" if c is None else
+                "、".join(f"`{k}` {v} 回" for k, v in c.most_common()))
+        print(f"| {label} | {cell} |", file=buf)
+    d = MissionConfig()
+    print(f"\n⚠ 口径 = `solver={d.solver}`：2 台车且池 ≤ "
+          f"`vrp_exact_max_targets={d.vrp_exact_max_targets}` 走 Held-Karp **精确最优**"
+          f"（构造性确定，同输入必同输出）；超阈值退 OR-Tools"
+          f"（预算 `vrp_time_limit_s={d.vrp_time_limit_s:g} s`、"
+          f"`vrp_gls_lambda={d.vrp_gls_lambda:g}`）。"
+          f"二段式は全体目标（46~66 点）を一度に解くので**必ず** OR-Tools 側。"
+          f"詳細と実測根拠は `contracts/DECISIONS.md` の **D21**。\n", file=buf)
+
+
 def scenario_profile(sid: str) -> Dict[str, Any]:
     mw = build_mothra_world() if sid == "mothra" else build_world_for_scenario(sid)
     area_ha = mw.world.x_max_m * mw.world.y_max_m / 1e4
@@ -111,6 +150,7 @@ def main() -> None:
           "无 Leader、无通信、无求解 |", file=buf)
     print("\n数据由 `09_compare_methods.py --scenario <id>` 逐场景产出，"
           "本表由 `11_compare_all_scenarios.py` 横向拼接，**不重算任何指标**。\n", file=buf)
+    solver_provenance(buf)
 
     print("## ⓪ 场景画像\n", file=buf)
     print("| 场景 | 目标数 | N×E (m) | 長宽比 N/E | 面积(ha) | 密度(/ha) | Leader 車道数 |",

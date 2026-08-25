@@ -211,3 +211,93 @@ def test_default_budget_is_thirty_seconds():
     人工裁决(2026-08-25):直接给 30 s —— 相对几千秒的任务时长可忽略。
     """
     assert MissionConfig().vrp_time_limit_s == 30.0
+
+
+# ======================================================================
+# 5. 投影点必须随 Leader 朝向走 —— 折返横移段的死锁回归
+# ======================================================================
+# 2026-08-25 由声呐幅宽单变量实验(scripts/13_swath_sweep.py)暴露:
+# sparse_2 在 2/3 车道下**任务停滞**,覆盖率掉到 30/46 与 14/46,Follower 在
+# 300000 s 里只走了 2.2 km —— 全程静止。
+#
+# 机制:`project_to_window_front_multi` 原来按 North 锚定,返回
+# `(leader_north, follower_east)`,只有 psi=0/pi 时才是"窗口前沿"。折返横移段
+# (psi=+-pi/2)窗口整体转 90 度,沿/横两轴互换:原本在窗口横向 290 m 处的
+# Follower 变成"后方 290 m",判据 A 正确地判它滞后;但此时投影点算出来**恰好
+# 等于该 Follower 当前位置**,它被要求"走到你已经在的地方" ⇒ 永不移动 ⇒
+# 判据 A 永不解除 ⇒ Leader 永不前进 ⇒ 死锁。
+#
+# 实测证据(停滞期,Leader 位姿 (705.0, 336.2, psi=90deg)):
+#     下发 F0 投影点 (705.0, 236.0) == F0 当前位置
+#     下发 F1 投影点 (705.0, 312.3) == F1 当前位置
+#
+# 触发条件 = 折返 and 半幅宽 > look_back。运用点(幅宽 100 ⇒ 半幅宽 50 < 100)
+# 不满足,故七场景的正式结果不受此 bug 影响 —— 但方法本身不该带这个隐藏约束。
+import math  # noqa: E402
+
+from msim.contracts.geometry import WindowRegion  # noqa: E402
+
+from vrpsim.planner import project_to_window_front_multi  # noqa: E402
+from vrpsim.windows import along_back_m  # noqa: E402
+
+
+def _region(north, east, psi, *, look_back=100.0, width=351.0):
+    return WindowRegion(leader_pose=(float(north), float(east), float(psi)),
+                        look_back_m=float(look_back), width_m=float(width))
+
+
+def test_projection_pulls_a_lagging_follower_forward_during_a_turn():
+    """横移段:落后的 Follower 拿到的投影点必须让它**沿后方距离变小**。
+
+    这正是死锁的判据 —— 旧实现返回它当前位置,s 一点不减。
+    """
+    reg = _region(705.0, 336.2, math.pi / 2.0)        # 折返横移,朝东
+    pos = [np.array([705.0, 236.0]), np.array([705.0, 312.3])]
+    pts = project_to_window_front_multi(pos, reg, 702.0, min_sep_m=20.0)
+    for i, p in enumerate(pts):
+        assert p is not None
+        s_before = along_back_m(reg, pos[i])
+        s_after = along_back_m(reg, p)
+        if s_before > 0.0:                            # 本来就落后的那台
+            assert s_after < s_before - 1e-9, (
+                f"F{i}: 投影点没有把它往前拉(s {s_before:.1f} → {s_after:.1f})")
+
+
+def test_projection_lands_on_the_window_front_edge_for_any_heading():
+    """任意朝向下,投影点的沿后方距离都应为 0(= 落在前沿这条线上)。"""
+    for psi in (0.0, math.pi / 2.0, math.pi, -math.pi / 2.0, 0.7):
+        reg = _region(300.0, 350.0, psi)
+        pos = [np.array([260.0, 300.0]), np.array([340.0, 400.0])]
+        for p in project_to_window_front_multi(pos, reg, 702.0, min_sep_m=20.0):
+            assert p is not None
+            assert along_back_m(reg, p) == pytest.approx(0.0, abs=1e-6), \
+                f"psi={psi:.2f}: 投影点不在窗口前沿上"
+
+
+def test_projection_keeps_minimum_separation_for_any_heading():
+    for psi in (0.0, math.pi / 2.0, math.pi, -math.pi / 2.0):
+        reg = _region(300.0, 350.0, psi)
+        pos = [np.array([300.0, 349.0]), np.array([300.0, 351.0])]   # 几乎重合
+        a, b = project_to_window_front_multi(pos, reg, 702.0, min_sep_m=20.0)
+        assert float(np.linalg.norm(a - b)) >= 20.0 - 1e-6
+
+
+def test_projection_stays_inside_the_field():
+    """投影点不许跑到场地外面去(旧实现靠夹 East 保证,新实现要对任意朝向保证)。"""
+    for psi in (0.0, math.pi / 2.0, math.pi, -math.pi / 2.0):
+        reg = _region(10.0, 20.0, psi, width=351.0)
+        pos = [np.array([10.0, 0.0]), np.array([10.0, 700.0])]
+        for p in project_to_window_front_multi(pos, reg, 702.0, min_sep_m=20.0,
+                                               world_north_max_m=705.0):
+            assert p is not None
+            assert -1e-6 <= p[0] <= 705.0 + 1e-6, f"psi={psi}: North 越界 {p[0]}"
+            assert -1e-6 <= p[1] <= 702.0 + 1e-6, f"psi={psi}: East 越界 {p[1]}"
+
+
+def test_projection_is_unchanged_when_heading_north():
+    """psi=0 时新实现必须与旧口径逐位相同 —— 七场景的正式结果不许因本次修复而变。"""
+    reg = _region(300.0, 350.0, 0.0, width=100.0)
+    pos = [np.array([200.0, 310.0]), np.array([250.0, 390.0])]
+    pts = project_to_window_front_multi(pos, reg, 702.0, min_sep_m=20.0)
+    assert pts[0] == pytest.approx(np.array([300.0, 310.0]))
+    assert pts[1] == pytest.approx(np.array([300.0, 390.0]))
