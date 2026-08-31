@@ -263,3 +263,162 @@ def test_follower_colors_distinct_from_target_colors():
 def test_cjk_font_available():
     """图里有中日文;本机无 CJK 字体会出豆腐块 —— 至少要能选到一个。"""
     assert use_cjk_font() is not None
+
+
+# ======================================================================
+# 二段式基线的 Follower 轨迹快照(15_plot_twophase_followers.py 的画笔)
+# ======================================================================
+@pytest.fixture(scope="module")
+def tp(mw):
+    """跑一次二段式,连同 `t_survey_s` / `routes` 一起给出 —— 后两者不在 npz 里,
+    正式脚本从 `twophase_summary.json` 读,这里直接从结果对象取,口径相同。"""
+    from vrpsim.contracts.mission import MissionConfig
+    from vrpsim.contracts.twophase import TwoPhaseConfig
+    from vrpsim.twophase import run_twophase
+
+    res = run_twophase(TwoPhaseConfig(base=MissionConfig(solver="greedy",
+                                                        vrp_time_limit_s=0.1)), mw)
+    tl = {"t_s": res.t_s, "leader_north_m": res.leader_north_m,
+          "vehicle_pos": res.vehicle_pos, "visit_time_s": res.visit_time_s,
+          "meta": res.meta}
+    return tl, res.routes, float(res.t_survey_s), float(res.t_finish_s)
+
+
+def test_twophase_snapshot_draws_no_leader_and_no_window(mw, tp):
+    """本图**只画 Follower**:没有 Leader 标记,也没有观测窗口矩形。
+
+    二段式里窗口这个机构根本不存在(阶段2 一次性对全局目标表求解),
+    画出来就是把提案的机构安到基线头上 —— 对照组即失真。
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+    from vrpsim.viz import plot_twophase_snapshot
+
+    tl, routes, t_sv, t_fin = tp
+    _, ax = plt.subplots()
+    plot_twophase_snapshot(ax, mw, tl, 0.5 * (t_sv + t_fin), routes=routes)
+    assert not [p for p in ax.patches if isinstance(p, Rectangle)], "画出了观测窗口"
+    assert not [ln for ln in ax.lines if ln.get_marker() == "v"], "画出了 Leader"
+    plt.close(ax.figure)
+
+
+def test_twophase_snapshot_targets_are_all_revealed_from_phase2(mw, tp):
+    """阶段2 起全目标已探明 ⇒ 首帧就该画满,且只有「未确认 / 已确认」两态。
+
+    这不是画风选择,是 `twophase.py` 写明的前提;若哪天改成按窗口揭示,这里会红。
+    """
+    import matplotlib.pyplot as plt
+    from vrpsim.viz import plot_twophase_snapshot
+
+    tl, routes, t_sv, t_fin = tp
+
+    def n_markers(t):
+        _, ax = plt.subplots()
+        plot_twophase_snapshot(ax, mw, tl, t, routes=routes)
+        n = int(sum(c.get_offsets().shape[0] for c in ax.collections))
+        plt.close(ax.figure)
+        return n
+
+    assert n_markers(t_sv) == mw.dataset.n, "阶段2 首帧就该把全部目标画出来"
+    assert n_markers(t_fin) == mw.dataset.n
+
+
+def test_twophase_snapshot_first_frame_has_nothing_confirmed(mw, tp):
+    """t = t_survey 那一帧:路线刚下发,一个目标都还没被相机确认(全空心)。"""
+    import matplotlib.pyplot as plt
+    from vrpsim.viz import plot_twophase_snapshot
+
+    tl, routes, t_sv, _ = tp
+    _, ax = plt.subplots()
+    plot_twophase_snapshot(ax, mw, tl, t_sv, routes=routes)
+    hollow = _hollow_collections(ax)
+    assert len(hollow) == 1, f"空心标记被拆成了 {len(hollow)} 组"
+    assert hollow[0].get_offsets().shape[0] == mw.dataset.n
+    plt.close(ax.figure)
+
+
+def test_twophase_snapshot_last_frame_splits_confirmed_by_type(mw, tp):
+    """収工帧:全部确认 ⇒ 按 chimney / mound 分实心两组,没有空心剩余。"""
+    import matplotlib.pyplot as plt
+    from vrpsim.viz import plot_twophase_snapshot
+
+    tl, routes, _, t_fin = tp
+    _, ax = plt.subplots()
+    plot_twophase_snapshot(ax, mw, tl, t_fin, routes=routes)
+    hollow = _hollow_collections(ax)
+    solid = [c for c in ax.collections if c not in hollow]
+    assert not hollow, "収工时还有未确认的目标"
+    assert len(solid) == len(set(mw.dataset.type_.tolist())) == 2
+    assert sum(c.get_offsets().shape[0] for c in solid) == mw.dataset.n
+    plt.close(ax.figure)
+
+
+def test_twophase_snapshot_trajectory_is_truncated_at_t(mw, tp):
+    """轨迹只画到当前时刻 —— 与提案快照同一条规矩,画多了就是剧透。"""
+    import matplotlib.pyplot as plt
+    from vrpsim.viz import plot_twophase_snapshot
+
+    tl, _, t_sv, t_fin = tp
+    t = 0.5 * (t_sv + t_fin)
+    k = int(np.searchsorted(tl["t_s"], t + 1e-9, side="right") - 1)
+    _, ax = plt.subplots()
+    plot_twophase_snapshot(ax, mw, tl, t, routes=None)   # 不垫预定路线,只剩轨迹
+    traj = [ln for ln in ax.lines if len(ln.get_xdata()) > 2]
+    assert len(traj) == tl["vehicle_pos"].shape[1], "轨迹线条数应等于执行机台数"
+    for ln in traj:
+        assert len(ln.get_xdata()) == k + 1
+    plt.close(ax.figure)
+
+
+def test_twophase_planned_route_is_the_open_loop_solution(mw, tp):
+    """垫在底下的虚线 = 阶段2 **开环预定路线**:起点 + 该车的目标序列,顺序一致。
+
+    这条虚线是提案/基线最核心的一处对照(基线一次解完再不重解),
+    所以它必须真的等于 VRP 的解,不能是"看起来差不多"的示意线。
+    """
+    import matplotlib.pyplot as plt
+    from vrpsim.viz import plot_twophase_snapshot
+
+    tl, routes, t_sv, _ = tp
+    tg = np.asarray(mw.dataset.targets_ned, dtype=float)
+    pos0 = np.asarray(tl["vehicle_pos"], dtype=float)[0]
+
+    _, ax = plt.subplots()
+    plot_twophase_snapshot(ax, mw, tl, t_sv, routes=routes)
+    dashed = [ln for ln in ax.lines if ln.get_linestyle() == "--"]
+    assert len(dashed) == len(routes)
+    for i, ln in enumerate(dashed):
+        want = np.vstack([pos0[i][None, :], tg[[int(j) for j in routes[i]]]])
+        assert np.allclose(ln.get_xdata(), want[:, 1])    # 横轴 = East
+        assert np.allclose(ln.get_ydata(), want[:, 0])    # 纵轴 = North
+    plt.close(ax.figure)
+
+
+def test_twophase_planned_route_can_be_turned_off(mw, tp):
+    """`routes=None` / `show_planned_route=False` 都必须真的不画虚线。"""
+    import matplotlib.pyplot as plt
+    from vrpsim.viz import plot_twophase_snapshot
+
+    tl, routes, t_sv, _ = tp
+    for kw in ({"routes": None}, {"routes": routes, "show_planned_route": False}):
+        _, ax = plt.subplots()
+        plot_twophase_snapshot(ax, mw, tl, t_sv, **kw)
+        assert not [ln for ln in ax.lines if ln.get_linestyle() == "--"], kw
+        plt.close(ax.figure)
+
+
+def test_twophase_snapshot_keeps_same_orientation_and_no_text(mw, tp):
+    """朝向与「无图例/无标题/无轴标签」的规矩与提案快照逐条相同 ——
+    时刻标签由出图脚本加,不由画笔加(关掉标签就必须一个字都没有)。"""
+    import matplotlib.pyplot as plt
+    from vrpsim.viz import plot_twophase_snapshot
+
+    tl, routes, t_sv, t_fin = tp
+    _, ax = plt.subplots()
+    plot_twophase_snapshot(ax, mw, tl, 0.5 * (t_sv + t_fin), routes=routes)
+    assert ax.get_xlim() == (0.0, mw.world.y_max_m)
+    assert ax.get_ylim() == (0.0, mw.world.x_max_m)
+    assert ax.get_legend() is None and ax.get_title() == ""
+    assert ax.get_xlabel() == "" and ax.get_ylabel() == ""
+    assert not [t for t in ax.texts if t.get_text().strip()]
+    plt.close(ax.figure)

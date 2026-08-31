@@ -29,7 +29,7 @@ from .world import MothraWorld
 
 __all__ = ["load_basemap", "export_basemap", "plot_world", "plot_routes",
            "plot_coverage", "plot_leader_track", "plot_window", "use_cjk_font",
-           "sweep_times", "plot_mission_snapshot",
+           "sweep_times", "plot_mission_snapshot", "plot_twophase_snapshot",
            "render_terrain_rgb", "make_bathy_cmap", "normalize_bathy",
            "HAXBY", "GRAY_RAMP",
            "TYPE_STYLE", "FOLLOWER_COLORS", "LEADER_COLOR",
@@ -600,4 +600,114 @@ def plot_coverage(ax, coverage: np.ndarray, world_cfg, *, color: str = "#ffffff"
     ax.imshow(rgba, origin="lower",
               extent=(0.0, world_cfg.y_max_m, 0.0, world_cfg.x_max_m),
               interpolation="nearest", zorder=3)
+    return ax
+
+
+def plot_twophase_snapshot(ax, mw: MothraWorld, timeline: Mapping[str, Any],
+                           t_s: float, *,
+                           basemap: Optional[np.ndarray] = None,
+                           style: Optional[FigureStyle] = None,
+                           routes: Optional[Sequence[Sequence[int]]] = None,
+                           vehicle_colors: Optional[Sequence[str]] = None,
+                           marker_scale: Optional[float] = None,
+                           traj_linewidth: Optional[float] = None,
+                           auv_marker_scale: Optional[float] = None,
+                           show_planned_route: bool = True):
+    """二段式基线 (D19) 在 t_s 时刻的单帧快照 —— **只画执行机(Follower)的轨迹**。
+
+    与 `plot_mission_snapshot` 的三处差异全部来自二段式的**串行结构**,不是画风偏好:
+
+    1. **不画 Leader、不画观测窗口。** 二段式的 Leader 在阶段1 就走完了整条测线,
+       阶段2 一步也不动;滑动窗口这个机构在二段式里根本不存在(阶段2 一次性对
+       全局目标表求解)。所以本图从头到尾只有两台 Follower。
+
+    2. **目标没有「未揭示」这个状态。** 进入阶段2 的那一刻全部目标已探明 ——
+       这正是 `twophase.py` 模块文档写明的前提(Mothra 由
+       `test_survey_phase_detects_every_target` 钉成事实,其余场景靠把场地裁到
+       「最后车道 + 幅宽/2」在几何上保证)。因此这里**不调用** `sweep_times`
+       (二段式的记录里本来也没有 `window_north` 这一列),目标只有两态:
+       未确认 = 空心,已确认 = 按 chimney / mound 分实心。
+       ⚠ 调用方必须保证 `t_s >= t_survey_s`;传更早的时刻会把 ground truth
+       画出来(那时 Leader 还没扫到),口径就错了。
+
+    3. `routes` 传进来时,把**开环预先定死的路线**用细虚线垫在底下。
+       这是与提案手法最核心的一处对照:二段式头一次解出来的路线一直执行到底,
+       轨迹与预定路线逐点重合;提案则是随探査推进不断重解。默认开,
+       `show_planned_route=False` 可关掉。
+
+    `routes` 是 `TwoPhaseResult.routes` 的原样(每台一条,元素为
+    `mw.dataset.targets_ned` 的下标),起点取 `vehicle_pos[0]`(阶段1 全程待机
+    ⇒ 首拍位置就是 VRP 的起点,与 `twophase.run_twophase` 的口径逐字一致)。
+    """
+    from matplotlib.patheffects import withStroke
+
+    st = style or DEFAULT_STYLE
+    colors = list(vehicle_colors or st.follower_colors)
+    m_scale = st.target_marker_scale if marker_scale is None else float(marker_scale)
+    traj_lw = st.traj_linewidth if traj_linewidth is None else float(traj_linewidth)
+    auv_scale = st.auv_marker_scale if auv_marker_scale is None else float(auv_marker_scale)
+
+    times = np.asarray(timeline["t_s"], dtype=np.float64)
+    k = int(np.searchsorted(times, t_s + 1e-9, side="right") - 1)
+    k = int(np.clip(k, 0, len(times) - 1))
+
+    pos = np.asarray(timeline["vehicle_pos"], dtype=np.float64)      # (T,V,2)
+    visit = np.asarray(timeline["visit_time_s"], dtype=np.float64)
+    tg = np.asarray(mw.dataset.targets_ned, dtype=np.float64)
+
+    # --- 底图(只铺地形,目标自己画) --------------------------------
+    plot_world(mw, ax=ax, basemap=basemap, show_field=False, show_targets=False,
+               colorbar=False, title="", style=st)
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+
+    # --- 阶段2 开环预定路线(虚线垫底) --------------------------------
+    if show_planned_route and routes is not None:
+        for i, r in enumerate(routes):
+            idx = [int(j) for j in r]
+            if not idx:
+                continue
+            c = colors[i % len(colors)]
+            xy = np.vstack([pos[0, i][None, :], tg[idx]])            # (1+m,2)
+            ax.plot(xy[:, 1], xy[:, 0], "--", color=c, linewidth=traj_lw * 0.55,
+                    alpha=0.55, zorder=4)
+
+    # --- 执行机轨迹(只到 t)+ 当前位置 --------------------------------
+    # 彩色测深底图上,蓝色轨迹会淹没在深蓝的轴部裂谷里 ⇒ 给轨迹加深色描边
+    # (与 `plot_mission_snapshot` 同一处理,两张图并排看时线宽观感才一致)。
+    halo = ([withStroke(linewidth=traj_lw + st.traj_halo_linewidth,
+                        foreground=st.traj_halo_color)]
+            if st.traj_halo_linewidth > 0 else None)
+    for i in range(pos.shape[1]):
+        c = colors[i % len(colors)]
+        ax.plot(pos[:k + 1, i, 1], pos[:k + 1, i, 0], "-", color=c,
+                linewidth=traj_lw, alpha=0.95, zorder=5,
+                solid_joinstyle="round", solid_capstyle="round",
+                path_effects=halo)
+        ax.plot([pos[k, i, 1]], [pos[k, i, 0]], marker="o", color=c,
+                markersize=st.follower_marker_size * auv_scale,
+                markeredgecolor=st.marker_edge_color,
+                markeredgewidth=st.auv_marker_edge_width, zorder=8)
+
+    # --- 目标:阶段2 全部已揭示,只分「未确认 / 已确认」两态 -------------
+    observed = ~np.isnan(visit) & (visit <= t_s + 1e-9)
+    size = st.target_marker_size * m_scale
+
+    if (~observed).any():
+        ax.scatter(tg[~observed, 1], tg[~observed, 0], s=size,
+                   marker=UNCONFIRMED_MARKER, facecolor="none",
+                   edgecolor=st.unconfirmed_color, linewidth=st.unconfirmed_linewidth,
+                   zorder=6,
+                   path_effects=[withStroke(linewidth=st.unconfirmed_halo_linewidth,
+                                            foreground=st.unconfirmed_halo_color)])
+
+    type_style = st.type_style
+    for t_name in sorted(set(mw.dataset.type_.tolist())):
+        done = (mw.dataset.type_ == t_name) & observed
+        if not done.any():
+            continue
+        marker, color = type_style.get(t_name, _TYPE_FALLBACK)
+        ax.scatter(tg[done, 1], tg[done, 0], s=size,
+                   marker=marker, facecolor=color, edgecolor=st.marker_edge_color,
+                   linewidth=st.confirmed_edge_linewidth, zorder=7)
     return ax
