@@ -1,0 +1,237 @@
+{
+  "method": "rigid translation, minimises sum of detrended residuals",
+  "trend_radius_m": 14.0,
+  "search_span_m": 10.0,
+  "shift_dn_m": -5.0,
+  "shift_de_m": 2.25,
+  "shift_norm_m": 5.482928049865327,
+  "resid_sum_before": -2.7520260568899175,
+  "resid_sum_after": -199.91382803441866,
+  "n_improved": 28,
+  "targets": [
+    {
+      "waypoint_id": 1,
+      "type": "chimney",
+      "resid_before": -1.4157211735969213,
+      "resid_after": -12.420424508255564,
+      "depth_before": 2282.3928279484862,
+      "depth_after": 2270.279406496582
+    },
+    {
+      "waypoint_id": 2,
+      "type": "chimney",
+      "resid_before": -0.6286623174596571,
+      "resid_after": -14.828174395243423,
+      "depth_before": 2282.920372109375,
+      "depth_after": 2267.6399729296877
+    },
+    {
+      "waypoint_id": 3,
+      "type": "chimney",
+      "resid_before": -0.1944424531734512,
+      "resid_after": -4.875214488181427,
+      "depth_before": 2283.872230339356,
+      "depth_after": 2278.117251928711
+    },
+    {
+      "waypoint_id": 4,
+      "type": "chimney",
+      "resid_before": -0.0913799384147751,
+      "resid_after": -1.5966925412781166,
+      "depth_before": 2283.7950245458987,
+      "depth_after": 2281.5013414941404
+    },
+    {
+      "waypoint_id": 5,
+      "type": "chimney",
+      "resid_before": -0.49764535352414896,
+      "resid_after": -10.85508716601953,
+      "depth_before": 2284.917771396484,
+      "depth_after": 2273.7238126953125
+    },
+    {
+      "waypoint_id": 6,
+      "type": "chimney",
+      "resid_before": -0.7946580419311431,
+      "resid_after": -3.059489169317658,
+      "depth_before": 2285.2107092407227,
+      "depth_after": 2282.7019715002443
+    },
+    {
+      "waypoint_id": 7,
+      "type": "mound",
+      "resid_before": 0.23733544002516282,
+      "resid_after": -12.326737470237731,
+      "depth_before": 2285.6805625156253,
+      "depth_after": 2273.018718711914
+    },
+    {
+      "waypoint_id": 8,
+      "type": "chimney",
+      "resid_before": -1.0929693492003025,
+      "resid_after": -6.081638284657856,
+      "depth_before": 2285.3158389711916,
+      "depth_after": 2279.436718373047
+    },
+    {
+      "waypoint_id": 9,
+      "type": "mound",
+      "resid_before": 0.5615382238302118,
+      "resid_after": -2.934077275548134,
+      "depth_before": 2279.720698120117,
+      "depth_after": 2276.7380947265624
+    },
+    {
+      "waypoint_id": 10,
+      "type": "mound",
+      "resid_before": 0.16589429860550808,
+      "resid_after": -10.293362748381242,
+      "depth_before": 2280.556691821289,
+      "depth_after": 2270.434708618164
+    },
+    {
+      "waypoint_id": 11,
+      "type": "mound",
+      "resid_before": 0.04870556033665707,
+      "resid_after": -7.4523755231757605,
+      "depth_before": 2282.29544590332,
+      "depth_after": 2274.37019980957
+    },
+    {
+      "waypoint_id": 12,
+      "type": "mound",
+      "resid_before": 2.126362165926821,
+      "resid_after": -10.958745362081572,
+      "depth_before": 2286.260880078125,
+      "depth_after": 2272.71657578125
+    },
+    {
+      "waypoint_id": 13,
+      "type": "chimney",
+      "resid_before": 2.961493369393793,
+      "resid_after": -2.781577946798734,
+      "depth_before": 2284.0289733833006,
+      "depth_after": 2278.9272111535643
+    },
+    {
+      "waypoint_id": 14,
+      "type": "chimney",
+      "resid_before": 1.0072700538394201,
+      "resid_after": -7.668861460626886,
+      "depth_before": 2273.607640796875,
+      "depth_after": 2264.0380643723142
+    },
+    {
+      "waypoint_id": 15,
+      "type": "chimney",
+      "resid_before": -0.4145630253387935,
+      "resid_after": -14.945144811947557,
+      "depth_before": 2270.5023866660154,
+      "depth_after": 2255.1754417128905
+    },
+    {
+      "waypoint_id": 16,
+      "type": "chimney",
+      "resid_before": 0.31006728573902365,
+      "resid_after": -7.068264763381649,
+      "depth_before": 2272.080981201172,
+      "depth_after": 2263.7537950805668
+    },
+    {
+      "waypoint_id": 17,
+      "type": "chimney",
+      "resid_before": -1.1780341012622557,
+      "resid_after": -8.753629519752394,
+      "depth_before": 2269.2432165546875,
+      "depth_after": 2260.3525205981446
+    },
+    {
+      "waypoint_id": 18,
+      "type": "chimney",
+      "resid_before": -0.6284076719948644,
+      "resid_after": -5.427309845841137,
+      "depth_before": 2270.7119193359376,
+      "depth_after": 2264.7855783886716
+    },
+    {
+      "waypoint_id": 19,
+      "type": "chimney",
+      "resid_before": -0.8532647309380081,
+      "resid_after": -3.514395527405213,
+      "depth_before": 2269.421002993652,
+      "depth_after": 2266.8334240976565
+    },
+    {
+      "waypoint_id": 20,
+      "type": "mound",
+      "resid_before": -2.1826592110587626,
+      "resid_after": -3.6358546051824305,
+      "depth_before": 2268.9438692700196,
+      "depth_after": 2267.1819542675785
+    },
+    {
+      "waypoint_id": 21,
+      "type": "mound",
+      "resid_before": -2.578540462896399,
+      "resid_after": -6.188683803726235,
+      "depth_before": 2267.913020296875,
+      "depth_after": 2263.6935857734375
+    },
+    {
+      "waypoint_id": 22,
+      "type": "mound",
+      "resid_before": -0.39517323335894616,
+      "resid_after": -6.471105087468004,
+      "depth_before": 2270.1819863098144,
+      "depth_after": 2263.6212841525876
+    },
+    {
+      "waypoint_id": 23,
+      "type": "chimney",
+      "resid_before": 1.5497529429012502,
+      "resid_after": -9.100341459612991,
+      "depth_before": 2261.5262638593754,
+      "depth_after": 2252.8743118125
+    },
+    {
+      "waypoint_id": 24,
+      "type": "chimney",
+      "resid_before": -1.569563605895837,
+      "resid_after": -7.863215662262519,
+      "depth_before": 2254.8815933127444,
+      "depth_after": 2248.7598281821292
+    },
+    {
+      "waypoint_id": 25,
+      "type": "chimney",
+      "resid_before": 1.0701576424885388,
+      "resid_after": -1.8030911274609025,
+      "depth_before": 2253.891065851563,
+      "depth_after": 2252.298298652344
+    },
+    {
+      "waypoint_id": 26,
+      "type": "chimney",
+      "resid_before": -0.8446781452034884,
+      "resid_after": -9.777510306290424,
+      "depth_before": 2254.936147573242,
+      "depth_after": 2245.4886696679687
+    },
+    {
+      "waypoint_id": 27,
+      "type": "chimney",
+      "resid_before": 3.087181820173555,
+      "resid_after": -3.0677842420818706,
+      "depth_before": 2258.6122367504886,
+      "depth_after": 2252.589516936523
+    },
+    {
+      "waypoint_id": 28,
+      "type": "chimney",
+      "resid_before": -0.517422044902105,
+      "resid_after": -4.165038932201696,
+      "depth_before": 2256.399064589844,
+      "depth_after": 2253.0813724345703
+    }
+  ]
+}
